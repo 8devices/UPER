@@ -147,8 +147,10 @@ int main(void) {
 
 	SysTick_Config(SystemCoreClock/1000);	// Configure Systick to run at 1kHz (1ms)
 
-	//while (CDCPacketStream_init(&stream) != 0);
-	while (CDC_Init(&stream) != LPC_OK); // Load SFPPacketStream
+	uint32_t guid[4];
+	IAP_GetSerialNumber(guid);
+
+	while (CDC_Init(&stream, guid) != LPC_OK); // Load SFPPacketStream
 
 	LPC_SYSCON->SYSAHBCLKCTRL |= BIT6 | BIT16 | BIT19; // Enable clock for GPIO, IOConfig and Pin Interrupts
 

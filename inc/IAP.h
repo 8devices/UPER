@@ -44,14 +44,18 @@ void iap_entry(unsigned param_tab[], unsigned result_tab[]) {
 	iap(param_tab, result_tab);
 }
 
-void read_serial_number(void) {
-	param_table[0] = 58; //IAP command
-	iap_entry(param_table, result_table);
-	if (result_table[0] == 0) {
-		param_table[0] = 0;
-	} else {
-		param_table[0] = 0;
-	}
+void IAP_GetSerialNumber(uint32_t guid[4]) {
+	uint32_t command = 58;
+	uint32_t result[5];
+
+	do {
+		iap_entry(&command, &result);
+	} while (result[0] != 0);
+
+	guid[0] = result[1];
+	guid[1] = result[2];
+	guid[2] = result[3];
+	guid[3] = result[4];
 }
 
 

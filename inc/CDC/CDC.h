@@ -51,7 +51,9 @@ extern uint8_t VCOM_DeviceDescriptor[];
 extern uint8_t VCOM_StringDescriptor[];
 extern uint8_t VCOM_ConfigDescriptor[];
 
-ErrorCode_t CDC_Init(SFPStream *stream);
+extern uint8_t UPER_USBSerialStringDescriptor[];
+
+ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]);
 
 #endif /* CDC_H_ */
 

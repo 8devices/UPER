@@ -322,12 +322,44 @@ ALIGN4 const uint8_t VCOM_StringDescriptor[] = {
   /* Index 0x05: Interface 2, Alternate Setting 0 */
   ( 8*2 + 2),                        /* bLength (8 Char + Type + length) */
   USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
-  'O',0,
-  'S',0,
-  'C',0,
-  ' ',0,
-  'V', 0,
+  'U',0,
+  'P',0,
+  'E',0,
+  'R',0,
+  ' ', 0,
   'C', 0,
   'O', 0,
   'M', 0,
+};
+
+ALIGN4 uint8_t UPER_USBSerialStringDescriptor[] = {
+  (2 + 2*27),                        /* bLength */
+  USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '-', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '-', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '-', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
 };

@@ -135,6 +135,20 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 				return LPC_OK;
 			}
 
+			if (packet.bmRequestType.B == 0x80 // Setup Device to Host
+					&& packet.bRequest == 0x06 // Get descriptor
+					&& packet.wValue.WB.H == 0x03 // Get String Descriptor
+					&& packet.wValue.WB.L == 3 // Serial number string
+				) {
+
+				uint32_t descSize = UPER_USBSerialStringDescriptor[0];
+				if (descSize > packet.wLength)
+					descSize = packet.wLength;
+
+				pUsbApi->hw->WriteEP(pUsbHandle, USB_ENDPOINT_IN(0), UPER_USBSerialStringDescriptor, descSize);
+				return LPC_OK;
+			}
+
 
 			pCtrl->EP0Data.Count = packet.wLength;   // Number of bytes to transfer
 
@@ -329,12 +343,49 @@ void UART_IRQHandler() {
 	}
 }
 
-ErrorCode_t CDC_Init(SFPStream *stream) {
+char inline CDC_intToBase64(uint8_t i) {
+	i &= 63;
+
+	if (i < 10) {
+		return '0' + i;
+	} else if (i < (10+26)) {
+		return ('A'-10) + i;
+	} else if (i < (10+26+26)) {
+		return ('a'-10-26) + i;
+	} else if (i == 62) {
+		return '@';
+	} else {
+		return '$';
+	}
+}
+
+void inline CDC_GenerateSerialDescriptor(uint32_t guid[4]) {
+
+	uint8_t *ptr = &UPER_USBSerialStringDescriptor[2];
+
+	uint8_t i;
+	for (i=0; i<4; i++) {
+		uint32_t id = guid[i];
+
+		*(ptr+0) = CDC_intToBase64(id >> 30);
+		*(ptr+2) = CDC_intToBase64(id >> 24);
+		*(ptr+4) = CDC_intToBase64(id >> 18);
+		*(ptr+6) = CDC_intToBase64(id >> 12);
+		*(ptr+8) = CDC_intToBase64(id >> 6);
+		*(ptr+10) = CDC_intToBase64(id);
+
+		ptr += 14;
+	}
+}
+
+ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 	USBD_API_INIT_PARAM_T usb_param;
 	USB_CORE_DESCS_T desc;
 	USBD_HANDLE_T hUsb;
 	ErrorCode_t ret = LPC_OK;
 	uint32_t ep_indx;
+
+	CDC_GenerateSerialDescriptor(guid);
 
 	/* get USB API table pointer */
 	pUsbApi = (USBD_API_T*) ((*(ROM **) (0x1FFF1FF8))->pUSBD);
