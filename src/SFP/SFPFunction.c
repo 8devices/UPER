@@ -514,7 +514,7 @@ void SFPFunction_send(SFPFunction *func, SFPStream *stream) {
 					*ptr++ = '0';
 					*ptr++ = 'x';
 
-					if (argInt > 0xFFFF) {
+					if (argInt > 0xFFFFFF) {
 						*ptr++ = SFPMisc_hexChar(argInt >> 28);
 						*ptr++ = SFPMisc_hexChar(argInt >> 24);
 					}
