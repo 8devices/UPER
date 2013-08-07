@@ -34,13 +34,11 @@
 #define IAP_H_
 
 #define IAP_ADDRESS 0x1FFF1FF1
-unsigned param_table[5];
-unsigned result_table[5];
 
 
-void iap_entry(unsigned param_tab[], unsigned result_tab[]) {
-	void (*iap)(unsigned[], unsigned[]);
-	iap = (void (*)(unsigned[], unsigned[])) IAP_ADDRESS;
+void inline iap_entry(uint32_t param_tab[], uint32_t result_tab[]) {
+	void (*iap)(uint32_t[], uint32_t[]);
+	iap = (void (*)(uint32_t [], uint32_t[])) IAP_ADDRESS;
 	iap(param_tab, result_tab);
 }
 
@@ -49,7 +47,7 @@ void IAP_GetSerialNumber(uint32_t guid[4]) {
 	uint32_t result[5];
 
 	do {
-		iap_entry(&command, &result);
+		iap_entry(&command, result);
 	} while (result[0] != 0);
 
 	guid[0] = result[1];
