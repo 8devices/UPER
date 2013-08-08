@@ -596,15 +596,23 @@ uint8_t  CDC_Stream_readByte(void) {
 }
 
 void CDC_Stream_write(uint8_t *buf, uint32_t len) {
+	while (len) {
+		uint32_t nWrite = CDC_SFP_txBufferFree();
 
-	if (len > CDC_SFP_txBufferFree()) {
-		CDC_Stream_flush();
-		while (len > CDC_SFP_txBufferFree());
+		if (nWrite == 0) {
+			CDC_Stream_flush();
+			while ((nWrite = CDC_SFP_txBufferFree()) == 0);
+		}
+
+		if (nWrite > len)
+			nWrite = len;
+
+		len -= nWrite;
+
+		while (nWrite--) {
+			CDC_SFP_txBuffer[CDC_SFP_txBufferWritePos++ & CDC_SFP_TX_BUFFER_MASK] = *buf++;
+		}
 	}
-
-	while (len--)
-		CDC_SFP_txBuffer[CDC_SFP_txBufferWritePos++ & CDC_SFP_TX_BUFFER_MASK] = *buf++;
-
 }
 
 void CDC_Stream_flush(void) {
