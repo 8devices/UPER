@@ -65,8 +65,6 @@ static inline void I2C_ERROR() {
 void I2C_IRQHandler(void) {
 	uint8_t status = LPC_I2C->STAT;
 
-	//LPC_I2C->CONCLR = BIT3 | BIT4 | BIT5; // Clear interrupt flag , start and stop bits
-
 	if (status == 0xF8) {
 		LPC_I2C->CONCLR = BIT3;
 		return;
@@ -74,7 +72,7 @@ void I2C_IRQHandler(void) {
 
 	switch (status) {
 		case 0x08: {	// START
-			/*LPC_I2C->CONCLR = BIT5;//clear start;
+			LPC_I2C->CONCLR = BIT5;//clear start;
 			if (I2CHandler.status != I2C_START) { // deny unknown i2c sources
 				I2C_ERROR();
 			} else {
@@ -85,15 +83,7 @@ void I2C_IRQHandler(void) {
 					I2CHandler.status = I2C_SLAR;
 					LPC_I2C->DAT = (I2CHandler.slaveAddress << 1) | 1; // Send SLA+R
 				}
-			}*/
-			if (I2CHandler.writeSize > 0) {
-				I2CHandler.status = I2C_SLAW;
-				LPC_I2C ->DAT = I2CHandler.slaveAddress << 1; // Send SLA+W
-			} else {
-				I2CHandler.status = I2C_SLAR;
-				LPC_I2C ->DAT = (I2CHandler.slaveAddress << 1) | 1; // Send SLA+R
 			}
-			LPC_I2C->CONCLR = BIT5;
 			break;
 		}
 		case 0x18: {	// SLAW + ACK
@@ -146,6 +136,7 @@ void I2C_IRQHandler(void) {
 			break;
 		}
 		case 0x10: {	// Repeated START XXX: clear START bit??
+			LPC_I2C->CONCLR = BIT5;//clear start;
 			if (I2CHandler.status == I2C_RESTART) {
 				I2CHandler.status = I2C_SLAR;
 				LPC_I2C->DAT = I2CHandler.slaveAddress << 1 | 1; // Send SLA+R
@@ -157,8 +148,10 @@ void I2C_IRQHandler(void) {
 		case 0x40: {	// SLAR + ACK
 			if (I2CHandler.status == I2C_SLAR) {
 				I2CHandler.status = I2C_DATAR;
-				if (I2CHandler.readSize == 1) {	// if it's the last byte
-					LPC_I2C->CONSET = BIT2;	// Return NACK
+				if (I2CHandler.readSize > 1) {	// if it's the last byte
+					LPC_I2C->CONSET = BIT2;	// Return ACK
+				} else {
+					LPC_I2C->CONCLR = BIT2; // Return NACK
 				}
 			} else {
 				I2C_ERROR();
@@ -183,7 +176,7 @@ void I2C_IRQHandler(void) {
 				I2CHandler.readSize--;
 
 				if (I2CHandler.readSize == 1) {	// if it's the last byte
-					LPC_I2C->CONSET = BIT2;	// Return NACK
+					LPC_I2C->CONCLR = BIT2;	// Return NACK
 				}
 			} else {
 				I2C_ERROR();
