@@ -196,6 +196,10 @@ int main(void) {
 	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI0TRANS, UPER_FUNCTION_ID_IN_SPI0TRANS, lpc_spi0_trans);
 	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI0END,   UPER_FUNCTION_ID_IN_SPI0END, lpc_spi0_end);
 
+	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI1BEGIN, UPER_FUNCTION_ID_IN_SPI1BEGIN, lpc_spi1_begin);
+	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI1TRANS, UPER_FUNCTION_ID_IN_SPI1TRANS, lpc_spi1_trans);
+	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI1END,   UPER_FUNCTION_ID_IN_SPI1END, lpc_spi1_end);
+
 	/* I2C functions */
 	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_I2CBEGIN, UPER_FUNCTION_ID_IN_I2CBEGIN, lpc_i2c_begin);
 	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_I2CTRANS, UPER_FUNCTION_ID_IN_I2CTRANS, lpc_i2c_trans);

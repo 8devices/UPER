@@ -39,4 +39,8 @@ void lpc_spi0_begin(SFPFunction *msg);
 void lpc_spi0_trans(SFPFunction *msg);
 void lpc_spi0_end(SFPFunction *msg);
 
+void lpc_spi1_begin(SFPFunction *msg);
+void lpc_spi1_trans(SFPFunction *msg);
+void lpc_spi1_end(SFPFunction *msg);
+
 #endif /* LPC_SPI_H_ */

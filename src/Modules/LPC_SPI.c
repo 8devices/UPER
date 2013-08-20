@@ -33,6 +33,9 @@
 
 #include "Modules/LPC_SPI.h"
 
+/*
+ * SPI0
+ */
 void lpc_spi0_begin(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
 		return;
@@ -115,4 +118,91 @@ void lpc_spi0_end(SFPFunction *msg) {
 	LPC_SSP0->CR1 = 0;		// SPI disabled
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT11;	// disable SPI0 clock
 	LPC_SYSCON->PRESETCTRL &= ~1; 			// assert SPI0
+}
+
+/*
+ * SPI1
+ */
+void lpc_spi1_begin(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 2)
+		return;
+
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return;
+
+	uint32_t divider = (SFPFunction_getArgument_int32(msg, 0)-1) & 0xFF;
+	uint32_t mode = SFPFunction_getArgument_int32(msg, 1) & 0x3;
+
+	LPC_SYSCON->PRESETCTRL |= BIT2; 	// de-assert SPI1
+	LPC_SYSCON->SYSAHBCLKCTRL |= BIT18;	// enable SPI1 clock
+	LPC_SYSCON->SSP1CLKDIV = 1; 		//48MHz
+
+
+	LPC_SSP1->CR1 = 0;		// Master mode, SPI disabled
+	LPC_SSP1->CPSR = 24;	// 48MHz/24 = 2MHz
+	LPC_SSP1->CR0 = (0x7) | (0 << 4) | (mode << 6) | (divider << 8); // 8bits, SPI mode x
+	LPC_SSP1->IMSC = 0;		// Interrupts disabled
+	LPC_SSP1->CR1 = BIT1;	//Master mode, SPI enabled
+
+	while (LPC_SSP1->SR & BIT4);	// wait while BUSY (reading or writing)
+
+	while (LPC_SSP1->SR & BIT2) {	// Read while Rx FIFO not empty
+		LPC_SSP1->DR;
+	}
+}
+
+void lpc_spi1_trans(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 2)
+		return;
+
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_BYTE_ARRAY || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT) return;
+
+	uint32_t dataSize, writeSize;
+	uint8_t *data = SFPFunction_getArgument_barray(msg, 0, &dataSize);
+
+	uint32_t readSize = writeSize = dataSize;
+	uint8_t *readBuf = NULL, *readPtr = NULL;
+
+	uint8_t requestRead =  SFPFunction_getArgument_int32(msg, 1) & 0x1;
+	if (requestRead) {
+		readBuf = (uint8_t*)MemoryManager_malloc(writeSize);
+		readPtr = readBuf;
+	}
+
+	while (writeSize || readSize) {
+		while (writeSize && (LPC_SSP1->SR & BIT1)) { // Tx FIFO not full
+			LPC_SSP1->DR = *data++;
+			writeSize--;
+		}
+
+		while (readSize && (LPC_SSP1->SR & BIT2)) { // Rx FIFO not empty
+			uint32_t tmp = LPC_SSP1->DR;
+			readSize--;
+			if (readBuf != NULL)
+				*readPtr++ = tmp;
+		}
+	}
+
+	if (readBuf != NULL) {
+		SFPFunction *outFunc = SFPFunction_new();
+		if (outFunc != NULL) {
+			SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+			SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_SPI1TRANS);
+			SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_SPI1TRANS);
+			SFPFunction_addArgument_barray(outFunc, readBuf, dataSize);
+			SFPFunction_send(outFunc, &stream);
+			SFPFunction_delete(outFunc);
+		}
+
+		MemoryManager_free(readBuf);
+	}
+}
+
+void lpc_spi1_end(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 0)
+		return;
+
+	LPC_SSP1->CR1 = 0;		// SPI disabled
+	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT18;	// disable SPI1 clock
+	LPC_SYSCON->PRESETCTRL &= ~BIT2;		// assert SPI1
 }
