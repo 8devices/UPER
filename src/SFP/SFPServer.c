@@ -558,7 +558,7 @@ SFPResult SFPServer_cycle(SFPServer *server) {
 					} else if (c == '"') {
 						server->stage = SFP_STAGE_PARAM_END;
 						SFPServer_tmpBufferAppendByte(server, 0);
-						SFPFunction_addArgument_string(server->tmpFunction, server->tmpStringBuf);
+						SFPFunction_addArgument_string(server->tmpFunction, (char*)server->tmpStringBuf);
 						SFPServer_tmpBufferClear(server);
 						break;
 					} else if ((c >= 32) && (c <= 126)) {
@@ -633,7 +633,7 @@ SFPResult SFPServer_cycle(SFPServer *server) {
 						} else if (c == '"') {
 							server->stage = SFP_STAGE_PARAM_END;
 							SFPServer_tmpBufferAppendByte(server, 0);
-							SFPFunction_addArgument_string(server->tmpFunction, server->tmpStringBuf);
+							SFPFunction_addArgument_string(server->tmpFunction, (char*)server->tmpStringBuf);
 							SFPServer_tmpBufferClear(server);
 						} else if ((c >= 32) && (c <= 126)) {
 							SFPServer_tmpBufferAppendByte(server, c);
@@ -668,7 +668,7 @@ SFPResult SFPServer_cycle(SFPServer *server) {
 						} else if (c == '"') {
 							server->stage = SFP_STAGE_PARAM_END;
 							SFPServer_tmpBufferAppendByte(server, 0);
-							SFPFunction_addArgument_string(server->tmpFunction, server->tmpStringBuf);
+							SFPFunction_addArgument_string(server->tmpFunction, (char*)server->tmpStringBuf);
 							SFPServer_tmpBufferClear(server);
 						} else if ((c >= 32) && (c <= 126)) {
 							SFPServer_tmpBufferAppendByte(server, c);
