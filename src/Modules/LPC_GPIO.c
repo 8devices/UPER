@@ -80,6 +80,12 @@ uint8_t const LPC_PIN_SECONDARY_FUNCTION[] = {
 
 volatile SFPFunctionType LPC_INTERRUPT_FUNCTION_TYPE[8];
 
+void lpc_config_gpioInit() {
+	uint8_t pin;
+	for (pin=0; pin<LPC_PIN_COUNT; pin++)
+		*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_PRIMARY_FUNCTION[pin];
+}
+
 void lpc_config_setPrimary(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 1) return;
 

@@ -156,9 +156,7 @@ int main(void) {
 
 #ifndef DEBUG
 	// Disabled for debugging (JTAG)
-	uint8_t pin;
-	for (pin=0; pin<LPC_GPIO_PIN_COUNT; pin++)
-		*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_PRIMARY_FUNCTION[pin];
+	lpc_config_gpioInit();
 #endif
 
 	// PIO0_4 and PIO0_5 forced to I2C

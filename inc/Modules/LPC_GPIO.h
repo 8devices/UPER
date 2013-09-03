@@ -35,9 +35,11 @@
 
 #include "main.h"
 
-inline void GPIO_EnableInt0();
+inline void GPIO_EnableInt0(void);
 
-void FLEX_INT0_IRQHandler();
+void FLEX_INT0_IRQHandler(void);
+
+void lpc_config_gpioInit(void);
 
 void lpc_config_setPrimary(SFPFunction *msg);
 
