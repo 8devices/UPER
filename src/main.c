@@ -51,10 +51,13 @@ void SysTick_Handler() {
 		}
 	}
 
-	if (timer_interrupt0 != TIMER_STOP) {
-		timer_interrupt0--;
-		if (timer_interrupt0 == 0) {
-			GPIO_EnableInt0();
+	uint8_t i;
+	for (i=0; i<INTERRUPT_COUNT; i++) {
+		if (timer_interrupts[i] != TIMER_STOP) {
+			timer_interrupts[i]--;
+			if (timer_interrupts[i] == 0) {
+				GPIO_EnableInterrupt(i);
+			}
 		}
 	}
 }
@@ -143,7 +146,9 @@ int main(void) {
 	SystemCoreClockUpdate();
 
 	timer_serial = TIMER_STOP;
-	timer_interrupt0 = TIMER_STOP;
+	uint8_t i;
+	for (i=0; i<INTERRUPT_COUNT; i++)
+		timer_interrupts[i] = TIMER_STOP;
 
 	SysTick_Config(SystemCoreClock/1000);	// Configure Systick to run at 1kHz (1ms)
 

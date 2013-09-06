@@ -211,7 +211,7 @@ void lpc_attachInterrupt(SFPFunction *func) {
 	uint8_t p_pin = SFPFunction_getArgument_int32(func, 1);	// pin ID
 	uint8_t p_mode = SFPFunction_getArgument_int32(func, 2);	// interrupt mode
 
-	if (p_pin >= LPC_PIN_COUNT || p_intID > 7 || p_mode > 4) return;
+	if (p_pin >= LPC_PIN_COUNT || p_intID >= INTERRUPT_COUNT || p_mode > 4) return;
 
 	NVIC_DisableIRQ(p_intID);	// Disable interrupt. XXX: Luckily FLEX_INTx_IRQn == x, so it can be used this way, otherwise BE AWARE!
 
@@ -274,10 +274,10 @@ void lpc_detachInterrupt(SFPFunction *msg) {
 	LPC_GPIO_PIN_INT->FALL = (1 << p_intID);	// Clear falling edge (sort of) flag
 }
 
-inline void GPIO_EnableInt0() {
-	LPC_GPIO_PIN_INT->RISE = BIT0;	// Clear rising edge (sort of) flag
-	LPC_GPIO_PIN_INT->FALL = BIT0;	// Clear falling edge (sort of) flag
-	NVIC_EnableIRQ(FLEX_INT0_IRQn);	// Enable ISR
+inline void GPIO_EnableInterrupt(uint8_t intID) {
+	LPC_GPIO_PIN_INT->RISE = (1<<intID);	// Clear rising edge (sort of) flag
+	LPC_GPIO_PIN_INT->FALL = (1<<intID);	// Clear falling edge (sort of) flag
+	NVIC_EnableIRQ(intID);	// Enable ISR
 }
 
 static inline void GPIO_SEND_INT(uint8_t intID, uint8_t intEvt) {
@@ -293,26 +293,28 @@ static inline void GPIO_SEND_INT(uint8_t intID, uint8_t intEvt) {
 	}
 }
 
-void FLEX_INT0_IRQHandler() {
-	timer_interrupt0 = TIMER_STOP;
-	NVIC_DisableIRQ(FLEX_INT0_IRQn);		// Disable ISR
+static void GPIO_InterruptHandler(uint8_t intID) {
+	timer_interrupts[intID] = TIMER_STOP;
+	NVIC_DisableIRQ(intID);		// Disable ISR
 
-	if (LPC_GPIO_PIN_INT->IST & BIT0) {
+	uint8_t intBit = (1 << intID);
+
+	if (LPC_GPIO_PIN_INT->IST & intBit) {
 		uint8_t interruptEvent = 0xFF;
 
-		if ((LPC_GPIO_PIN_INT->ISEL & BIT0)) {	// if LEVEL mode
-			if (LPC_GPIO_PIN_INT->IENR & BIT0) {	// if LEVEL interrupts are enabled
-				if (LPC_GPIO_PIN_INT->IENF & BIT0) {	// HIGH mode
+		if ((LPC_GPIO_PIN_INT->ISEL & intBit)) {	// if LEVEL mode
+			if (LPC_GPIO_PIN_INT->IENR & intBit) {	// if LEVEL interrupts are enabled
+				if (LPC_GPIO_PIN_INT->IENF & intBit) {	// HIGH mode
 					interruptEvent = 1;
 				} else {								// LOW mode
 					interruptEvent = 0;
 				}
 			}
 		} else {	// EDGE mode
-			if ((LPC_GPIO_PIN_INT->RISE & BIT0) && (LPC_GPIO_PIN_INT->IENR & BIT0)) {	// Rising edge interrupt
+			if ((LPC_GPIO_PIN_INT->RISE & intBit) && (LPC_GPIO_PIN_INT->IENR & intBit)) {	// Rising edge interrupt
 				interruptEvent = 3;
 			}
-			if ((LPC_GPIO_PIN_INT->FALL & BIT0) && (LPC_GPIO_PIN_INT->IENF & BIT0)) {	// Falling edge interrupt
+			if ((LPC_GPIO_PIN_INT->FALL & intBit) && (LPC_GPIO_PIN_INT->IENF & intBit)) {	// Falling edge interrupt
 				if (interruptEvent == 3)
 					interruptEvent = 2;				// Edge CHANGE (RISE+FALL)
 				else
@@ -320,11 +322,43 @@ void FLEX_INT0_IRQHandler() {
 			}
 		}
 
-		GPIO_SEND_INT(0, interruptEvent);
+		GPIO_SEND_INT(intID, interruptEvent);
 
-		timer_interrupt0 = 50; // 50ms delay
+		timer_interrupts[intID] = 50; // 50ms delay
 		return;
 	}
 
-	GPIO_EnableInt0();
+	GPIO_EnableInterrupt(intID);
+}
+
+void FLEX_INT0_IRQHandler() {
+	GPIO_InterruptHandler(0);
+}
+
+void FLEX_INT1_IRQHandler() {
+	GPIO_InterruptHandler(1);
+}
+
+void FLEX_INT2_IRQHandler() {
+	GPIO_InterruptHandler(2);
+}
+
+void FLEX_INT3_IRQHandler() {
+	GPIO_InterruptHandler(3);
+}
+
+void FLEX_INT4_IRQHandler() {
+	GPIO_InterruptHandler(4);
+}
+
+void FLEX_INT5_IRQHandler() {
+	GPIO_InterruptHandler(5);
+}
+
+void FLEX_INT6_IRQHandler() {
+	GPIO_InterruptHandler(6);
+}
+
+void FLEX_INT7_IRQHandler() {
+	GPIO_InterruptHandler(7);
 }
