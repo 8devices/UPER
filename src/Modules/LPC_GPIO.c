@@ -86,41 +86,46 @@ void lpc_config_gpioInit() {
 		*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_PRIMARY_FUNCTION[pin];
 }
 
-void lpc_config_setPrimary(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 1) return;
+SFPResult lpc_config_setPrimary(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 1) return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
 
 	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
 
-	if (pin >= LPC_PIN_COUNT) return;
+	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
 
 	*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_PRIMARY_FUNCTION[pin];
+
+	return SFP_OK;
 }
 
-void lpc_config_setSecondary(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 1) return;
+SFPResult lpc_config_setSecondary(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 1) return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
 
 	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
 
-	if (pin >= LPC_PIN_COUNT) return;
+	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
 
 	*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_SECONDARY_FUNCTION[pin];
+
+	return SFP_OK;
 }
 
 
-void lpc_pinMode(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 2) return;
+SFPResult lpc_pinMode(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 2) return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
 	uint8_t mode = SFPFunction_getArgument_int32(msg, 1);
 
-	if (pin >= LPC_PIN_COUNT) return;
-	if (mode > 4 || mode == 3) return;
+	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
+	if (mode > 4 || mode == 3) return SFP_ERR_ARG_VALUE;
 
 	uint8_t port = 0;
 	uint8_t pinNum = LPC_PIN_IDS[pin];
@@ -137,19 +142,21 @@ void lpc_pinMode(SFPFunction *msg) {
 		*LPC_PIN_REGISTERS[pin] |= (mode << 2) & LPC_PIN_MODE_MASK;		// Setup resistors
 		LPC_GPIO->DIR[port] &= ~(1 << pinNum);	// Clear direction bit (input)
 	}
+
+	return SFP_OK;
 }
 
-void lpc_digitalWrite(SFPFunction *msg) {
+SFPResult lpc_digitalWrite(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
-		return;
+		return SFP_ERR_ARG_TYPE;
 
 	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
 	uint8_t value = SFPFunction_getArgument_int32(msg, 1);
 
-	if (pin >= LPC_PIN_COUNT) return;
+	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
 
 	uint8_t port = 0;
 	uint8_t pinNum = LPC_PIN_IDS[pin];
@@ -163,19 +170,21 @@ void lpc_digitalWrite(SFPFunction *msg) {
 	} else {
 		LPC_GPIO->SET[port] = (1 << pinNum);
 	}
+
+	return SFP_OK;
 }
 
-void lpc_digitalRead(SFPFunction *msg) {
+SFPResult lpc_digitalRead(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 1)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT)
-		return;
+		return SFP_ERR_ARG_TYPE;
 
 	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
 
 	if (pin >= LPC_PIN_COUNT)
-		return;
+		return SFP_ERR_ARG_VALUE;
 
 	uint8_t port = 0;
 	uint8_t pinNum = LPC_PIN_IDS[pin];
@@ -190,28 +199,34 @@ void lpc_digitalRead(SFPFunction *msg) {
 		val = 1;
 
 	SFPFunction *outFunc = SFPFunction_new();
-	if (outFunc != NULL) {
-		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-		SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_DIGITALREAD);
-		SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_DIGITALREAD);
-		SFPFunction_addArgument_int32(outFunc, pin);
-		SFPFunction_addArgument_int32(outFunc, val);
-		SFPFunction_send(outFunc, &stream);
-		SFPFunction_delete(outFunc);
-	}
+
+	if (outFunc == NULL) return SFP_ERR_ALLOC_FAILED;
+
+	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+	SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_DIGITALREAD);
+	SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_DIGITALREAD);
+	SFPFunction_addArgument_int32(outFunc, pin);
+	SFPFunction_addArgument_int32(outFunc, val);
+	SFPFunction_send(outFunc, &stream);
+	SFPFunction_delete(outFunc);
+
+	return SFP_OK;
 }
 
-void lpc_attachInterrupt(SFPFunction *func) {
+SFPResult lpc_attachInterrupt(SFPFunction *func) {
 	if (SFPFunction_getArgumentCount(func) != 3)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(func, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(func, 1) != SFP_ARG_INT || SFPFunction_getArgumentType(func, 2) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(func, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(func, 1) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(func, 2) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint8_t p_intID = SFPFunction_getArgument_int32(func, 0);	// interrupt ID
 	uint8_t p_pin = SFPFunction_getArgument_int32(func, 1);	// pin ID
 	uint8_t p_mode = SFPFunction_getArgument_int32(func, 2);	// interrupt mode
 
-	if (p_pin >= LPC_PIN_COUNT || p_intID >= INTERRUPT_COUNT || p_mode > 4) return;
+	if (p_pin >= LPC_PIN_COUNT || p_intID >= INTERRUPT_COUNT || p_mode > 4) return SFP_ERR_ARG_VALUE;
 
 	NVIC_DisableIRQ(p_intID);	// Disable interrupt. XXX: Luckily FLEX_INTx_IRQn == x, so it can be used this way, otherwise BE AWARE!
 
@@ -257,13 +272,15 @@ void lpc_attachInterrupt(SFPFunction *func) {
 	LPC_GPIO_PIN_INT->FALL = (1 << p_intID);	// Clear falling edge (sort of) flag
 	NVIC_SetPriority(p_intID, 3); // set lowest priority
 	NVIC_EnableIRQ(p_intID);	// Enable interrupt. XXX: Luckily FLEX_INTx_IRQn == x, so it can be used this way, otherwise BE AWARE!
+
+	return SFP_OK;
 }
 
-void lpc_detachInterrupt(SFPFunction *msg) {
+SFPResult lpc_detachInterrupt(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 1)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
 
 	uint8_t p_intID = SFPFunction_getArgument_int32(msg, 0);	// interrupt ID
 
@@ -272,6 +289,8 @@ void lpc_detachInterrupt(SFPFunction *msg) {
 	LPC_GPIO_PIN_INT->CIENF = (1 << p_intID);	// Disable falling edge interrupt
 	LPC_GPIO_PIN_INT->RISE = (1 << p_intID);	// Clear rising edge (sort of) flag
 	LPC_GPIO_PIN_INT->FALL = (1 << p_intID);	// Clear falling edge (sort of) flag
+
+	return SFP_OK;
 }
 
 inline void GPIO_EnableInterrupt(uint8_t intID) {

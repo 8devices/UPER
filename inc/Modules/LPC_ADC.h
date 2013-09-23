@@ -35,6 +35,6 @@
 
 #include "main.h"
 
-void lpc_analogRead(SFPFunction *msg);
+SFPResult lpc_analogRead(SFPFunction *msg);
 
 #endif /* LPC_ADC_H_ */

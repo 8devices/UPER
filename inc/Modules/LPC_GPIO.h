@@ -48,19 +48,19 @@ void FLEX_INT7_IRQHandler(void);
 
 void lpc_config_gpioInit(void);
 
-void lpc_config_setPrimary(SFPFunction *msg);
+SFPResult lpc_config_setPrimary(SFPFunction *msg);
 
-void lpc_config_setSecondary(SFPFunction *msg);
+SFPResult lpc_config_setSecondary(SFPFunction *msg);
 
-void lpc_pinMode(SFPFunction *msg);
+SFPResult lpc_pinMode(SFPFunction *msg);
 
-void lpc_digitalWrite(SFPFunction *msg);
+SFPResult lpc_digitalWrite(SFPFunction *msg);
 
-void lpc_digitalRead(SFPFunction *msg);
+SFPResult lpc_digitalRead(SFPFunction *msg);
 
-void lpc_attachInterrupt(SFPFunction *msg);
+SFPResult lpc_attachInterrupt(SFPFunction *msg);
 
-void lpc_detachInterrupt(SFPFunction *msg);
+SFPResult lpc_detachInterrupt(SFPFunction *msg);
 
 
 #endif /* LPC_GPIO_H_ */

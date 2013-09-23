@@ -33,17 +33,17 @@
 
 #include "Modules/LPC_ADC.h"
 
-void lpc_analogRead(SFPFunction *msg) {
+SFPResult lpc_analogRead(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 1)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT)
-		return;
+		return SFP_ERR_ARG_TYPE;
 
 	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
 
 	if (pin > 7)
-		return;
+		return SFP_ERR_ARG_VALUE;
 
 	LPC_SYSCON->PDRUNCFG &= ~BIT4;			// power up ADC
 	LPC_SYSCON->SYSAHBCLKCTRL |= BIT13;		// enable ADC clock
@@ -57,13 +57,16 @@ void lpc_analogRead(SFPFunction *msg) {
 	LPC_SYSCON->PDRUNCFG |= BIT4;			// power down ADC
 
 	SFPFunction *outFunc = SFPFunction_new();
-	if (outFunc != NULL) {
-		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-		SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_ANALOGREAD);
-		SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_ANALOGREAD);
-		SFPFunction_addArgument_int32(outFunc, pin);
-		SFPFunction_addArgument_int32(outFunc, val);
-		SFPFunction_send(outFunc, &stream);
-		SFPFunction_delete(outFunc);
-	}
+
+	if (outFunc == NULL) return SFP_ERR_ALLOC_FAILED;
+
+	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+	SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_ANALOGREAD);
+	SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_ANALOGREAD);
+	SFPFunction_addArgument_int32(outFunc, pin);
+	SFPFunction_addArgument_int32(outFunc, val);
+	SFPFunction_send(outFunc, &stream);
+	SFPFunction_delete(outFunc);
+
+	return SFP_OK;
 }

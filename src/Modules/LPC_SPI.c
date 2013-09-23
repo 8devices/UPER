@@ -36,12 +36,13 @@
 /*
  * SPI0
  */
-void lpc_spi0_begin(SFPFunction *msg) {
+SFPResult lpc_spi0_begin(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
-		return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint32_t divider = (SFPFunction_getArgument_int32(msg, 0)-1) & 0xFF;
 	uint32_t mode = SFPFunction_getArgument_int32(msg, 1) & 0x3;
@@ -62,13 +63,17 @@ void lpc_spi0_begin(SFPFunction *msg) {
 	while (LPC_SSP0->SR & BIT2) {	// Read while Rx FIFO not empty
 		LPC_SSP0->DR;
 	}
+
+	return SFP_OK;
 }
 
-void lpc_spi0_trans(SFPFunction *msg) {
+SFPResult lpc_spi0_trans(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_BYTE_ARRAY || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_BYTE_ARRAY
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint32_t dataSize, writeSize;
 	uint8_t *data = SFPFunction_getArgument_barray(msg, 0, &dataSize);
@@ -80,6 +85,9 @@ void lpc_spi0_trans(SFPFunction *msg) {
 	if (requestRead) {
 		readBuf = (uint8_t*)MemoryManager_malloc(writeSize);
 		readPtr = readBuf;
+
+		if (readBuf == NULL)
+			return SFP_ERR_ALLOC_FAILED;
 	}
 
 	while (writeSize || readSize) {
@@ -98,37 +106,46 @@ void lpc_spi0_trans(SFPFunction *msg) {
 
 	if (readBuf != NULL) {
 		SFPFunction *outFunc = SFPFunction_new();
-		if (outFunc != NULL) {
-			SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-			SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_SPI0TRANS);
-			SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_SPI0TRANS);
-			SFPFunction_addArgument_barray(outFunc, readBuf, dataSize);
-			SFPFunction_send(outFunc, &stream);
-			SFPFunction_delete(outFunc);
+
+		if (outFunc == NULL) {
+			MemoryManager_free(readBuf);
+			return SFP_ERR_ALLOC_FAILED;
 		}
+
+		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+		SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_SPI0TRANS);
+		SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_SPI0TRANS);
+		SFPFunction_addArgument_barray(outFunc, readBuf, dataSize);
+		SFPFunction_send(outFunc, &stream);
+		SFPFunction_delete(outFunc);
 
 		MemoryManager_free(readBuf);
 	}
+
+	return SFP_OK;
 }
 
-void lpc_spi0_end(SFPFunction *msg) {
+SFPResult lpc_spi0_end(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	LPC_SSP0->CR1 = 0;		// SPI disabled
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT11;	// disable SPI0 clock
 	LPC_SYSCON->PRESETCTRL &= ~1; 			// assert SPI0
+
+	return SFP_OK;
 }
 
 /*
  * SPI1
  */
-void lpc_spi1_begin(SFPFunction *msg) {
+SFPResult lpc_spi1_begin(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
-		return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint32_t divider = (SFPFunction_getArgument_int32(msg, 0)-1) & 0xFF;
 	uint32_t mode = SFPFunction_getArgument_int32(msg, 1) & 0x3;
@@ -149,13 +166,17 @@ void lpc_spi1_begin(SFPFunction *msg) {
 	while (LPC_SSP1->SR & BIT2) {	// Read while Rx FIFO not empty
 		LPC_SSP1->DR;
 	}
+
+	return SFP_OK;
 }
 
-void lpc_spi1_trans(SFPFunction *msg) {
+SFPResult lpc_spi1_trans(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_BYTE_ARRAY || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_BYTE_ARRAY
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint32_t dataSize, writeSize;
 	uint8_t *data = SFPFunction_getArgument_barray(msg, 0, &dataSize);
@@ -167,6 +188,9 @@ void lpc_spi1_trans(SFPFunction *msg) {
 	if (requestRead) {
 		readBuf = (uint8_t*)MemoryManager_malloc(writeSize);
 		readPtr = readBuf;
+
+		if (readBuf == NULL)
+			return SFP_ERR_ALLOC_FAILED;
 	}
 
 	while (writeSize || readSize) {
@@ -185,24 +209,32 @@ void lpc_spi1_trans(SFPFunction *msg) {
 
 	if (readBuf != NULL) {
 		SFPFunction *outFunc = SFPFunction_new();
-		if (outFunc != NULL) {
-			SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-			SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_SPI1TRANS);
-			SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_SPI1TRANS);
-			SFPFunction_addArgument_barray(outFunc, readBuf, dataSize);
-			SFPFunction_send(outFunc, &stream);
-			SFPFunction_delete(outFunc);
+
+		if (outFunc == NULL) {
+			MemoryManager_free(readBuf);
+			return SFP_ERR_ALLOC_FAILED;
 		}
+
+		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+		SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_SPI1TRANS);
+		SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_SPI1TRANS);
+		SFPFunction_addArgument_barray(outFunc, readBuf, dataSize);
+		SFPFunction_send(outFunc, &stream);
+		SFPFunction_delete(outFunc);
 
 		MemoryManager_free(readBuf);
 	}
+
+	return SFP_OK;
 }
 
-void lpc_spi1_end(SFPFunction *msg) {
+SFPResult lpc_spi1_end(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	LPC_SSP1->CR1 = 0;		// SPI disabled
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT18;	// disable SPI1 clock
 	LPC_SYSCON->PRESETCTRL &= ~BIT2;		// assert SPI1
+
+	return SFP_OK;
 }

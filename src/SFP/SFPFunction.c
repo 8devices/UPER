@@ -244,6 +244,16 @@ SFPResult SFPFunction_addArgument_barray(SFPFunction *func, uint8_t *data, uint3
 	return res;
 }
 
+SFPResult SFPFunction_setArgument_int32(SFPFunction *func, uint32_t pos, int32_t i) {
+	if (pos >= func->argumentCount) return SFP_ERR;
+
+	if (func->arguments[pos]->type != SFP_ARG_INT) return SFP_ERR;
+
+	func->arguments[pos]->data.i = i;
+
+	return SFP_OK;
+}
+
 uint32_t SFPFunction_getArgumentCount(SFPFunction *func) {
 	return func->argumentCount;
 }
@@ -448,7 +458,6 @@ void SFPFunction_send(SFPFunction *func, SFPStream *stream) {
 		}
 
 		stream->write(data, packetSize+3);
-		stream->flush();
 		MemoryManager_free(data);
 	} else {	// ASCII format
 		uint32_t packetSize = strlen(func->name) + 1 + 1 + 1; // name + '(' + ')' + '\n'
@@ -568,7 +577,6 @@ void SFPFunction_send(SFPFunction *func, SFPStream *stream) {
 		*ptr++ = '\n';
 
 		stream->write(data, packetSize);
-		stream->flush();
 		MemoryManager_free(data);
 	}
 }

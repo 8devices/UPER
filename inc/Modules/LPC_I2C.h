@@ -37,8 +37,8 @@
 
 
 void I2C_IRQHandler(void);
-void lpc_i2c_begin(SFPFunction *msg);
-void lpc_i2c_trans(SFPFunction *msg);
-void lpc_i2c_end(SFPFunction *msg);
+SFPResult lpc_i2c_begin(SFPFunction *msg);
+SFPResult lpc_i2c_trans(SFPFunction *msg);
+SFPResult lpc_i2c_end(SFPFunction *msg);
 
 #endif /* LPC_I2C_H_ */

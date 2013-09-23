@@ -32,11 +32,11 @@
 
 #include "Modules/LPC_PWM.h"
 
-void lpc_pwm0_begin(SFPFunction *msg) {
+SFPResult lpc_pwm0_begin(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 1)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
 
 	uint32_t p_cyclePeriod = (SFPFunction_getArgument_int32(msg, 0)-1) & 0xFFFF;	// 16 bit value in microseconds
 
@@ -56,40 +56,48 @@ void lpc_pwm0_begin(SFPFunction *msg) {
 	LPC_CT16B0->PWMC = 0x7;   // PWM channels enabled: set channels 0-2 to PWM control
 
 	LPC_CT16B0->TCR &= ~BIT1;	// disable reset
+
+	return SFP_OK;
 }
 
-void lpc_pwm0_set(SFPFunction *msg) {
+SFPResult lpc_pwm0_set(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
-			return;
+			return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint32_t p_channelID = SFPFunction_getArgument_int32(msg, 0);			// PWM channel ID [0-2]
 	uint32_t p_highTime = SFPFunction_getArgument_int32(msg, 1);	// PWM signal high time in microseconds
 
-	if (p_channelID > 2) return;
+	if (p_channelID > 2) return SFP_ERR_ARG_VALUE;
 
 	if (LPC_CT16B0->MR3 < p_highTime)
 		LPC_CT16B0->MR[p_channelID] = 0;	// Set full high time (0 low time)
 	else
 		LPC_CT16B0->MR[p_channelID] = LPC_CT16B0->MR3 + 1 - p_highTime;	// Set PWM low time
+
+	return SFP_OK;
 }
 
-void lpc_pwm0_end(SFPFunction *msg) {
+SFPResult lpc_pwm0_end(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	LPC_CT16B0->TCR = 0;	// Disable timer
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT7;	// Disable clock for CT16B0
+
+	return SFP_OK;
 }
 
 /* 32 bit timer CT32B0 */
 
-void lpc_pwm1_begin(SFPFunction *msg) {
+SFPResult lpc_pwm1_begin(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 1)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
 
 	uint32_t p_cyclePeriod = SFPFunction_getArgument_int32(msg, 0);	// 32 bit value in microseconds
 
@@ -109,28 +117,36 @@ void lpc_pwm1_begin(SFPFunction *msg) {
 	LPC_CT32B0->PWMC = 0;	// All PWM channels disabled
 
 	LPC_CT32B0->TCR &= ~BIT1;	// disable reset
+
+	return SFP_OK;
 }
 
-void lpc_pwm1_set(SFPFunction *msg) {
+SFPResult lpc_pwm1_set(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
-			return;
+			return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint32_t p_channelID = SFPFunction_getArgument_int32(msg, 0);	// PWM channel ID [0-2]
 	uint32_t p_highTime = SFPFunction_getArgument_int32(msg, 1); 	// PWM signal high time in microseconds
 
-	if (p_channelID > 2) return;
+	if (p_channelID > 2) return SFP_ERR_ARG_VALUE;
 
 	LPC_CT32B0->MR[p_channelID] = (LPC_CT32B0->MR3 & 0xFFFF) - p_highTime;	// Set PWM low time
 	LPC_CT32B0->EMR |= ((1 << p_channelID) | (0x2 << (p_channelID+p_channelID+4))); // Connect channel output to pin and set pin high on match
 	LPC_CT32B0->PWMC |= (1 << p_channelID);	// Enable PWM mode for the channel
+
+	return SFP_OK;
 }
 
-void lpc_pwm1_end(SFPFunction *msg) {
+SFPResult lpc_pwm1_end(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	LPC_CT32B0->TCR = 0;	// Disable timer
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT9;	// Disable clock for CT16B0
+
+	return SFP_OK;
 }

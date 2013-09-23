@@ -217,9 +217,9 @@ void I2C_IRQHandler(void) {
 
 }
 
-void lpc_i2c_begin(SFPFunction *msg) {
+SFPResult lpc_i2c_begin(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
-			return;
+			return SFP_ERR_ARG_COUNT;
 
 	LPC_SYSCON->PRESETCTRL |= BIT1; 	// de-assert I2C
 	LPC_SYSCON->SYSAHBCLKCTRL |= BIT5;	// enable I2C clock
@@ -231,13 +231,17 @@ void lpc_i2c_begin(SFPFunction *msg) {
 	NVIC_EnableIRQ(I2C_IRQn);
 	LPC_I2C->CONSET = BIT6; //Enable I2C Master mode
 
+	return SFP_OK;
 }
 
-void lpc_i2c_trans(SFPFunction *msg) {
+SFPResult lpc_i2c_trans(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 3)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_BYTE_ARRAY || SFPFunction_getArgumentType(msg, 2) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_BYTE_ARRAY
+			|| SFPFunction_getArgumentType(msg, 2) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 
 	/* Initialize I2C Transfer parameters */
@@ -247,13 +251,13 @@ void lpc_i2c_trans(SFPFunction *msg) {
 	I2CHandler.readSize = SFPFunction_getArgument_int32(msg, 2);
 	I2CHandler.readCount = 0;
 
-	if (I2CHandler.writeSize == 0 && I2CHandler.readSize == 0) return;
+	if (I2CHandler.writeSize == 0 && I2CHandler.readSize == 0) return SFP_ERR_ARG_VALUE;
 
 	uint8_t *bundleBuf = NULL;
 	if (I2CHandler.readSize != 0) {
 		bundleBuf = (uint8_t*)MemoryManager_malloc(I2CHandler.readSize);
-		if (bundleBuf == NULL) // XXX: add error message?
-			return;
+		if (bundleBuf == NULL)
+			return SFP_ERR_ALLOC_FAILED;
 	}
 	I2CHandler.readPtr = bundleBuf;
 
@@ -265,29 +269,37 @@ void lpc_i2c_trans(SFPFunction *msg) {
 	while (I2CHandler.status != I2C_IDLE); // Wait for transfer to complete
 
 	SFPFunction *outFunc = SFPFunction_new();
-	if (outFunc != NULL) {
-		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-		SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_I2CTRANS);
-		SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_I2CTRANS);
-		if (I2CHandler.error) {
-			SFPFunction_addArgument_int32(outFunc, I2CHandler.error);
-		} else {
-			SFPFunction_addArgument_barray(outFunc, bundleBuf, I2CHandler.readCount);
-		}
-		SFPFunction_send(outFunc, &stream);
-		SFPFunction_delete(outFunc);
+
+	if (outFunc == NULL) {
+		MemoryManager_free(bundleBuf);
+		return SFP_ERR_ALLOC_FAILED;
 	}
 
+	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+	SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_I2CTRANS);
+	SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_I2CTRANS);
+	if (I2CHandler.error) {
+		SFPFunction_addArgument_int32(outFunc, I2CHandler.error);
+	} else {
+		SFPFunction_addArgument_barray(outFunc, bundleBuf, I2CHandler.readCount);
+	}
+	SFPFunction_send(outFunc, &stream);
+	SFPFunction_delete(outFunc);
+
 	MemoryManager_free(bundleBuf);
+
+	return SFP_OK;
 }
 
-void lpc_i2c_end(SFPFunction *msg) {
+SFPResult lpc_i2c_end(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
-		return;
+		return SFP_ERR_ARG_COUNT;
 
 	NVIC_DisableIRQ(I2C_IRQn);
 
 	LPC_I2C->CONCLR = BIT6 | BIT5 | BIT3 | BIT2;	// Clear all
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT5;	// disable I2C clock
 	LPC_SYSCON->PRESETCTRL &= ~BIT1; 	// assert I2C
+
+	return SFP_OK;
 }

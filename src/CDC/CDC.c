@@ -475,7 +475,6 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 	stream->read 	  = CDC_Stream_read;
 	stream->readByte  = CDC_Stream_readByte;
 	stream->write	  = CDC_Stream_write;
-	stream->flush	  = CDC_Stream_flush;
 
 	return LPC_OK;
 }
@@ -613,6 +612,7 @@ void CDC_Stream_write(uint8_t *buf, uint32_t len) {
 			CDC_SFP_txBuffer[CDC_SFP_txBufferWritePos++ & CDC_SFP_TX_BUFFER_MASK] = *buf++;
 		}
 	}
+	CDC_Stream_flush();
 }
 
 void CDC_Stream_flush(void) {

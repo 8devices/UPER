@@ -45,7 +45,6 @@ typedef struct _SFPStream {
 	uint32_t (*read)(uint8_t *buf, uint32_t len);	/**< Function that reads the data into the buffer */
 	uint8_t  (*readByte)(void);
 	void 	 (*write)(uint8_t *buf, uint32_t len);	/**< Function that write the data into the stream */
-	void	 (*flush)(void);
 } SFPStream;
 
 #endif /* SFPPACKETSTREAM_H_ */

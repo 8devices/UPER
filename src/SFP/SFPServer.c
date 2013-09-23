@@ -81,6 +81,8 @@ typedef struct _SFPServer {
 	SFPFunctionHandlerEntry *handlers;
 	uint32_t handlerCount;
 
+	SFPCallbackFunction defaultHandler;
+
 	SFPParseStage stage;
 
 	SFPFunction *tmpFunction;
@@ -115,6 +117,8 @@ SFPServer*	SFPServer_new(SFPStream *sfpStream) {
 
 	server->handlers = NULL;
 	server->handlerCount = 0;
+
+	server->defaultHandler = NULL;
 
 	server->stage = SFP_STAGE_FUNCTION_START;
 
@@ -206,7 +210,14 @@ SFPResult SFPServer_removeFunctionHandler(SFPServer *sfpServer, const char* fNam
 	return SFP_OK;
 }
 
+SFPResult SFPServer_setDefaultFunctionHandler(SFPServer *sfpServer, SFPCallbackFunction func) {
+	sfpServer->defaultHandler = func;
+	return SFP_OK;
+}
+
 void SFPServer_handleParsedFunction(SFPServer *server) {
+	uint8_t executed = 0;
+
 	SFPFunctionType type = SFPFunction_getType(server->tmpFunction);
 
 	if (type == SFP_FUNC_TYPE_BIN) {
@@ -216,6 +227,7 @@ void SFPServer_handleParsedFunction(SFPServer *server) {
 		for (i=0; i<server->handlerCount; i++) {
 			if (server->handlers[i].functionID == functionID) {
 				server->handlers[i].method(server->tmpFunction);
+				executed = 1;
 			}
 		}
 	} else {
@@ -225,8 +237,13 @@ void SFPServer_handleParsedFunction(SFPServer *server) {
 		for (i=0; i<server->handlerCount; i++) {
 			if (strcmp(server->handlers[i].functionName, functionName) == 0) {
 				server->handlers[i].method(server->tmpFunction);
+				executed = 1;
 			}
 		}
+	}
+
+	if (!executed) {
+		server->defaultHandler(server->tmpFunction);
 	}
 }
 

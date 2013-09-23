@@ -35,17 +35,17 @@
 
 #include "main.h"
 
-void lpc_pwm0_begin(SFPFunction *msg);
+SFPResult lpc_pwm0_begin(SFPFunction *msg);
 
-void lpc_pwm0_set(SFPFunction *msg);
+SFPResult lpc_pwm0_set(SFPFunction *msg);
 
-void lpc_pwm0_end(SFPFunction *msg);
+SFPResult lpc_pwm0_end(SFPFunction *msg);
 
 
-void lpc_pwm1_begin(SFPFunction *msg);
+SFPResult lpc_pwm1_begin(SFPFunction *msg);
 
-void lpc_pwm1_set(SFPFunction *msg);
+SFPResult lpc_pwm1_set(SFPFunction *msg);
 
-void lpc_pwm1_end(SFPFunction *msg);
+SFPResult lpc_pwm1_end(SFPFunction *msg);
 
 #endif /* LPC_PWM_H_ */

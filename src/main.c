@@ -77,43 +77,50 @@ inline uint8_t isValidRegisterAddress(uint32_t addr) {
 	return 0;
 }
 
-void lpc_system_registerWrite(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 2) return;
+SFPResult lpc_system_registerWrite(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 2) return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
 
 	uint32_t p_addr = SFPFunction_getArgument_int32(msg, 0);
 	uint32_t p_value = SFPFunction_getArgument_int32(msg, 1);
 
-	if (!isValidRegisterAddress(p_addr)) return;
+	if (!isValidRegisterAddress(p_addr)) return SFP_ERR_ARG_VALUE;
 
 	*((volatile uint32_t *)p_addr) = p_value;
+
+	return SFP_OK;
 }
 
-void lpc_system_registerRead(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 1) return;
+SFPResult lpc_system_registerRead(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 1) return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return;
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
 
 	uint32_t p_addr = SFPFunction_getArgument_int32(msg, 0);
 
-	if (!isValidRegisterAddress(p_addr)) return;
+	if (!isValidRegisterAddress(p_addr)) return SFP_ERR_ARG_VALUE;
 
 	uint32_t value = *((volatile uint32_t *)p_addr);
 
 	SFPFunction *func = SFPFunction_new();
-	if (func != NULL) {
-		SFPFunction_setType(func, SFPFunction_getType(msg));
-		SFPFunction_setID(func, UPER_FUNCTION_ID_OUT_REGISTERREAD);
-		SFPFunction_setName(func, UPER_FUNCTION_NAME_OUT_REGISTERREAD);
-		SFPFunction_addArgument_int32(func, p_addr);
-		SFPFunction_addArgument_int32(func, value);
-		SFPFunction_send(func, &stream);
-		SFPFunction_delete(func);
-	}
+
+	if (func == NULL) return SFP_ERR_ALLOC_FAILED;
+
+	SFPFunction_setType(func, SFPFunction_getType(msg));
+	SFPFunction_setID(func, UPER_FUNCTION_ID_OUT_REGISTERREAD);
+	SFPFunction_setName(func, UPER_FUNCTION_NAME_OUT_REGISTERREAD);
+	SFPFunction_addArgument_int32(func, p_addr);
+	SFPFunction_addArgument_int32(func, value);
+	SFPFunction_send(func, &stream);
+	SFPFunction_delete(func);
+
+	return SFP_OK;
 }
 
-void LedCallback(SFPFunction *msg) {
+SFPResult LedCallback(SFPFunction *msg) {
 	LPC_GPIO->NOT[0] |= BIT7;
 
 	SFPFunction *outFunc = SFPFunction_new();
@@ -140,6 +147,8 @@ void LedCallback(SFPFunction *msg) {
 		SFPFunction_send(outFunc, &stream);
 		SFPFunction_delete(outFunc);
 	}
+
+	return SFP_OK;
 }
 
 int main(void) {

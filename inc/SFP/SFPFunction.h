@@ -39,7 +39,15 @@
 #include <stdint.h>
 #include "SFPStream.h"
 
-typedef enum { SFP_OK=0, SFP_ERR=1, SFP_ERR_ALLOC_FAILED, SFP_ERR_FORMAT } SFPResult;
+typedef enum {
+	SFP_OK=0,
+	SFP_ERR=1,
+	SFP_ERR_ALLOC_FAILED,
+	SFP_ERR_FORMAT,
+	SFP_ERR_ARG_COUNT,
+	SFP_ERR_ARG_TYPE,
+	SFP_ERR_ARG_VALUE
+} SFPResult;
 
 typedef enum {
 	SFP_FUNC_TYPE_AUTO = 0,
@@ -71,6 +79,8 @@ SFPFunctionType	SFPFunction_getType(SFPFunction *func);
 SFPResult		SFPFunction_addArgument_int32(SFPFunction *func, int32_t i);
 SFPResult		SFPFunction_addArgument_string(SFPFunction *func, const char* s);
 SFPResult		SFPFunction_addArgument_barray(SFPFunction *func, uint8_t *data, uint32_t size);
+
+SFPResult		SFPFunction_setArgument_int32(SFPFunction *func, uint32_t pos, int32_t i);
 
 uint32_t		SFPFunction_getArgumentCount(SFPFunction *func);
 SFPArgumentType	SFPFunction_getArgumentType(SFPFunction *func, uint32_t position);

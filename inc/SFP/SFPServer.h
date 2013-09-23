@@ -57,7 +57,7 @@ typedef struct _SFPServer SFPServer;
 /**
  * \typedef SFPFunction describe the format of the SFPFunction handler function.
  */
-typedef void (*SFPCallbackFunction)(SFPFunction* sfpFunction);
+typedef SFPResult (*SFPCallbackFunction)(SFPFunction* sfpFunction);
 
 
 /**
@@ -107,6 +107,17 @@ SFPResult SFPServer_addFunctionHandler(SFPServer *sfpServer, const char* fName, 
  */
 SFPResult SFPServer_removeFunctionHandler(SFPServer *sfpServer, const char* fName, uint32_t fID, SFPCallbackFunction func);
 
+/**
+ * Sets the default function handler, which will be called when no function handler
+ * is found for the received function.
+ *
+ * @param sfpServer A pointer to the SFPServer instance.
+ *
+ * @param func A callback handler function.
+ *
+ * @return SFP_OK.
+ */
+SFPResult SFPServer_setDefaultFunctionHandler(SFPServer *sfpServer, SFPCallbackFunction func);
 
 
 /**
