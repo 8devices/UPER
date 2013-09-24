@@ -135,8 +135,6 @@ SFPResult LedCallback(SFPFunction *msg) {
 			SFPArgumentType t = SFPFunction_getArgumentType(msg, i);
 			if (t == SFP_ARG_INT) {
 				SFPFunction_addArgument_int32(outFunc, SFPFunction_getArgument_int32(msg, i));
-			} else if (t == SFP_ARG_STRING) {
-				SFPFunction_addArgument_string(outFunc, SFPFunction_getArgument_string(msg, i));
 			} else if (t == SFP_ARG_BYTE_ARRAY) {
 				uint32_t len = 0;
 				uint8_t *data = SFPFunction_getArgument_barray(msg, i, &len);
