@@ -45,6 +45,8 @@
 
 SFPStream stream;
 
+uint32_t GUID[4];
+
 #define TIMER_STOP	0xFFFFFFFF
 #define INTERRUPT_COUNT 8
 

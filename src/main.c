@@ -120,6 +120,25 @@ SFPResult lpc_system_registerRead(SFPFunction *msg) {
 	return SFP_OK;
 }
 
+SFPResult lpc_system_getDeviceInfo(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 0) return SFP_ERR_ARG_COUNT;
+
+	SFPFunction *func = SFPFunction_new();
+
+	if (func == NULL) return SFP_ERR_ALLOC_FAILED;
+
+	SFPFunction_setType(func, SFPFunction_getType(msg));
+	SFPFunction_setID(func, UPER_FUNCTION_ID_OUT_GETDEVICEINFO);
+	SFPFunction_setName(func, UPER_FUNCTION_NAME_OUT_GETDEVICEINFO);
+	SFPFunction_addArgument_barray(func, (uint8_t*)&GUID[0], 16);
+	SFPFunction_addArgument_int32(func, IAP_GetPartNumber());
+	SFPFunction_addArgument_int32(func, IAP_GetBootCodeVersion());
+	SFPFunction_send(func, &stream);
+	SFPFunction_delete(func);
+
+	return SFP_OK;
+}
+
 SFPResult LedCallback(SFPFunction *msg) {
 	LPC_GPIO->NOT[0] |= BIT7;
 
@@ -159,10 +178,9 @@ int main(void) {
 
 	SysTick_Config(SystemCoreClock/1000);	// Configure Systick to run at 1kHz (1ms)
 
-	uint32_t guid[4];
-	IAP_GetSerialNumber(guid);
+	IAP_GetSerialNumber(GUID);
 
-	while (CDC_Init(&stream, guid) != LPC_OK); // Load SFPPacketStream
+	while (CDC_Init(&stream, GUID) != LPC_OK); // Load SFPPacketStream
 
 	LPC_SYSCON->SYSAHBCLKCTRL |= BIT6 | BIT16 | BIT19; // Enable clock for GPIO, IOConfig and Pin Interrupts
 
@@ -225,9 +243,10 @@ int main(void) {
 	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PWM1END,   UPER_FUNCTION_ID_IN_PWM1END, lpc_pwm1_end);
 
 
-	/* Advanced functions */
+	/* Other functions */
 	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_REGISTERWRITE, UPER_FUNCTION_ID_IN_REGISTERWRITE, lpc_system_registerWrite);
 	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_REGISTERREAD,  UPER_FUNCTION_ID_IN_REGISTERREAD, lpc_system_registerRead);
+	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_GETDEVICEINFO,  UPER_FUNCTION_ID_IN_GETDEVICEINFO, lpc_system_getDeviceInfo);
 
 
 	SFPServer_loop(server);

@@ -56,6 +56,28 @@ void IAP_GetSerialNumber(uint32_t guid[4]) {
 	guid[3] = result[4];
 }
 
+uint32_t IAP_GetPartNumber(void) {
+	uint32_t command = 54;
+	uint32_t result[2];
+
+	do {
+		iap_entry(&command, result);
+	} while (result[0] != 0);
+
+	return result[1];
+}
+
+uint32_t IAP_GetBootCodeVersion(void) {
+	uint32_t command = 55;
+	uint32_t result[2];
+
+	do {
+		iap_entry(&command, result);
+	} while (result[0] != 0);
+
+	return result[1];
+}
+
 
 
 #endif /* IAP_H_ */
