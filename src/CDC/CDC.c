@@ -509,18 +509,59 @@ void UART_Init(uint32_t baudrate, uint8_t dataBits, parity_t parity, stop_bits_t
 	NVIC_DisableIRQ(UART_IRQn);
 
 	if (baudrate < 46 || baudrate > 3000000)
-		baudrate = 9600;
+		baudrate = CDC_UART_Config.baudrate;
 
 	if ((stopBits != STOP_BIT_1) && (stopBits != STOP_BIT_2)) // only 1 and 2 stop bits supported
-		stopBits = STOP_BIT_1;
+		stopBits = CDC_UART_Config.stopBits;
 
 	if (dataBits > 8 || dataBits < 5)
-		dataBits = 8;
+		dataBits = CDC_UART_Config.dataBits;
 
 	CDC_UART_Config.baudrate = baudrate;
 	CDC_UART_Config.stopBits = stopBits;
 	CDC_UART_Config.parity = parity;
 	CDC_UART_Config.dataBits = dataBits;
+
+
+	uint32_t roughDivider = (SystemCoreClock/16)/baudrate;
+
+	uint32_t divider = roughDivider;
+	uint8_t fracA = 0;
+	uint8_t fracB = 1;
+
+	uint32_t minFracClockDelta = (SystemCoreClock/16) - baudrate*divider;
+
+	if ((roughDivider >> 1) < 15) { // divider/2
+		uint32_t div;
+		for (div=(roughDivider>>1); div<=roughDivider; div++) {
+			uint32_t targetClock = div*baudrate;
+			int32_t targetFracClock = (SystemCoreClock/16) - targetClock;
+			if (targetFracClock < 0)
+				targetFracClock = -targetFracClock;
+
+			uint8_t tA;
+			for (tA=0; tA<15; tA++) {
+				uint32_t tmpFrackClock = targetClock*tA/15;
+				int32_t fracClockDelta = targetFracClock - tmpFrackClock;
+				if (fracClockDelta < 0)
+					fracClockDelta = -fracClockDelta;
+
+				if (fracClockDelta < minFracClockDelta) {
+					divider = div;
+					fracA = tA;
+					fracB = 15;
+					minFracClockDelta = fracClockDelta;
+				}
+			}
+		}
+	}
+
+	int32_t tmpFracClockDelta = (SystemCoreClock/16) - baudrate*(divider+1);
+	if (tmpFracClockDelta < minFracClockDelta) {
+		divider = divider + 1;
+		fracA = 0;
+		fracB = 1;
+	}
 
 
 	LPC_SYSCON->SYSAHBCLKCTRL |= (1 << 12); // enable AHB clock for UART
@@ -529,11 +570,10 @@ void UART_Init(uint32_t baudrate, uint8_t dataBits, parity_t parity, stop_bits_t
 	LPC_USART->LCR = (dataBits - 5) | ((stopBits == STOP_BIT_1 ? 0 : 1) << 2)
 			| ((parity == PARITY_NONE ? 0 : 1) << 3) | (((parity - 1) & 0x3) << 4)
 			| BIT7;
-	//LPC_USART->LCR = 0x83; 		// 8bit, 1stop, no parity, enable DLAB
-	uint32_t divider = ((SystemCoreClock/LPC_SYSCON->UARTCLKDIV)/16)/baudrate;	// divider settings for baudrate
+
 	LPC_USART->DLM = divider / 256;
 	LPC_USART->DLL = divider % 256;
-	LPC_USART->FDR = 0x10;		// no fractional divider, TODO: implement it
+	LPC_USART->FDR = (fracB << 4) | (fracA);		// no fractional divider, TODO: implement it
 	LPC_USART->LCR &= ~0x80;	// disable DLAB
 	LPC_USART->FCR = 0x07;		// enable and reset FIFO buffers
 	LPC_USART->IER = 0; 		// All USART interrupts disabled
