@@ -573,7 +573,7 @@ void UART_Init(uint32_t baudrate, uint8_t dataBits, parity_t parity, stop_bits_t
 
 	LPC_USART->DLM = divider / 256;
 	LPC_USART->DLL = divider % 256;
-	LPC_USART->FDR = (fracB << 4) | (fracA);		// no fractional divider, TODO: implement it
+	LPC_USART->FDR = (fracB << 4) | (fracA);
 	LPC_USART->LCR &= ~0x80;	// disable DLAB
 	LPC_USART->FCR = 0x07;		// enable and reset FIFO buffers
 	LPC_USART->IER = 0; 		// All USART interrupts disabled
