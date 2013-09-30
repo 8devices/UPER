@@ -33,6 +33,12 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+
+#define UPER_DEVICE_TYPE		'U'
+#define UPER_FW_VERSION_MAJOR	0
+#define UPER_FW_VERSION_MINOR	0
+#define UPER_FIRMWARE_VERSION		((UPER_DEVICE_TYPE << 24) | (UPER_FW_VERSION_MAJOR << 16) | UPER_FW_VERSION_MINOR)
+
 #include "LPC11Uxx.h"
 
 #include "lpc_def.h"

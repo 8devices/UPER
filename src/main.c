@@ -130,6 +130,7 @@ SFPResult lpc_system_getDeviceInfo(SFPFunction *msg) {
 	SFPFunction_setType(func, SFPFunction_getType(msg));
 	SFPFunction_setID(func, UPER_FUNCTION_ID_OUT_GETDEVICEINFO);
 	SFPFunction_setName(func, UPER_FUNCTION_NAME_OUT_GETDEVICEINFO);
+	SFPFunction_addArgument_int32(func, UPER_FIRMWARE_VERSION);
 	SFPFunction_addArgument_barray(func, (uint8_t*)&GUID[0], 16);
 	SFPFunction_addArgument_int32(func, IAP_GetPartNumber());
 	SFPFunction_addArgument_int32(func, IAP_GetBootCodeVersion());
