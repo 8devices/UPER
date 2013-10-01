@@ -156,9 +156,9 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 			pCtrl->EP0Data.Count = packet.wLength;   // Number of bytes to transfer
 
 			if ( (packet.bmRequestType.B == REQ_TYPE(REQUEST_HOST_TO_DEVICE,REQUEST_CLASS,REQUEST_TO_INTERFACE) )
-				  && (packet.bRequest        == 0x20 ) // SetLineCoding
-				  && (packet.wValue.W        == (0<<8) )    // descriptor type | index
-				  && ((packet.wIndex.W == 0) || (packet.wIndex.W == 2))
+				  && (packet.bRequest    == 0x20 ) // SetLineCoding
+				  && (packet.wValue.W    == 0 )    // Zero
+				  && ((packet.wIndex.W == USB_CDC_SFP_CIF_NUM) || (packet.wIndex.W == USB_CDC_UART_CIF_NUM)) // Interface number
 				) {
 
 				pCtrl->EP0Data.pData = pCtrl->EP0Buf;
@@ -169,13 +169,13 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 			}
 
 			if ( (packet.bmRequestType.B == REQ_TYPE(REQUEST_DEVICE_TO_HOST,REQUEST_CLASS,REQUEST_TO_INTERFACE) )
-				  && (packet.bRequest        == 0x21 ) // GetLineCoding
-				  && (packet.wValue.W        == (0<<8) )  // Report type | Report ID
-				  && ((packet.wIndex.W == 0) || (packet.wIndex.W == 2))
+				  && (packet.bRequest    == 0x21 ) // GetLineCoding
+				  && (packet.wValue.W    == 0 )  // Zero
+				  && ((packet.wIndex.W == USB_CDC_SFP_CIF_NUM) || (packet.wIndex.W == USB_CDC_UART_CIF_NUM)) // Interface number
 				) {
 				uint8_t lcs[] = { 0x80, 0x25, 0x00, 0x00, 0x00, 0x00, 0x08 }; // Default 9600 8n1
 
-				if (packet.wIndex.W == 0) {
+				if (packet.wIndex.W == USB_CDC_UART_CIF_NUM) {
 					lcs[0] = CDC_UART_Config.baudrate;
 					lcs[1] = CDC_UART_Config.baudrate >> 8;
 					lcs[2] = CDC_UART_Config.baudrate >> 16;
@@ -196,8 +196,8 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 			}
 
 			if ( (packet.bmRequestType.B == REQ_TYPE(REQUEST_HOST_TO_DEVICE,REQUEST_CLASS,REQUEST_TO_INTERFACE) )
-				  && (packet.bRequest        == 0x22 ) // SetControlLineState
-				  && ((packet.wIndex.W == 0) || (packet.wIndex.W == 2)) // Both interfaces
+				  && (packet.bRequest == 0x22 ) // SetControlLineState
+				  && ((packet.wIndex.W == USB_CDC_SFP_CIF_NUM) || (packet.wIndex.W == USB_CDC_UART_CIF_NUM)) // Both interfaces
 				) {
 				pUsbApi->core->StatusInStage(hUsb);
 				return LPC_OK;
@@ -212,8 +212,8 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 
 				if ( (packet.bmRequestType.B == REQ_TYPE(REQUEST_HOST_TO_DEVICE,REQUEST_CLASS,REQUEST_TO_INTERFACE) )
 					  && (packet.bRequest        == 0x20 ) // SetLineCoding
-					  && (packet.wValue.W        == (0<<8) )    // descriptor type | index
-					  && ((packet.wIndex.W == 0))
+					  && (packet.wValue.W        == (0<<8) )    // Zero
+					  && ((packet.wIndex.W == USB_CDC_UART_CIF_NUM)) // Interface number
 					) {
 					uint8_t *ptr = pCtrl->EP0Buf;
 					uint32_t baudrate = *ptr | (*(ptr+1) << 8) | (*(ptr+2) << 16) | (*(ptr+3) << 24);
@@ -260,7 +260,7 @@ ErrorCode_t UART_bulk_out_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 				return LPC_OK;
 			}
 
-			CDC_UART_txBufferSize = pUsbApi->hw->ReadEP(hUsb, CDC_DIF1_BULK_OUT_EP, (uint8_t*)CDC_UART_txBuffer);
+			CDC_UART_txBufferSize = pUsbApi->hw->ReadEP(hUsb, USB_CDC_UART_EP_BULK_OUT, (uint8_t*)CDC_UART_txBuffer);
 			CDC_UART_txBufferSent = 0;
 			CDC_UART_rxPending = 0;
 
@@ -295,7 +295,7 @@ ErrorCode_t CDC_SFP_bulk_out_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event
 
 			NVIC_DisableIRQ(USB_IRQn);
 
-			uint32_t rxLen = pUsbApi->hw->ReadEP(pUsbHandle, CDC_DIF2_BULK_OUT_EP, (uint8_t*)tmpRxBuf);
+			uint32_t rxLen = pUsbApi->hw->ReadEP(pUsbHandle, USB_CDC_SFP_EP_BULK_OUT, (uint8_t*)tmpRxBuf);
 			uint8_t *ptr = (uint8_t*)tmpRxBuf;
 			while (rxLen--) {
 				CDC_SFP_rxBuffer[CDC_SFP_rxBufferWritePos & CDC_SFP_RX_BUFFER_MASK] = *ptr++;
@@ -359,7 +359,7 @@ void UART_IRQHandler() {
 			// assuming that THR is empty at interrupt
 			LPC_USART->THR = CDC_UART_txBuffer[CDC_UART_txBufferSent++];
 		} else if (CDC_UART_rxPending) {
-			CDC_UART_txBufferSize = pUsbApi->hw->ReadEP(pUsbHandle, CDC_DIF1_BULK_OUT_EP, (uint8_t*)CDC_UART_txBuffer);
+			CDC_UART_txBufferSize = pUsbApi->hw->ReadEP(pUsbHandle, USB_CDC_UART_EP_BULK_OUT, (uint8_t*)CDC_UART_txBuffer);
 			CDC_UART_txBufferSent = 0;
 			CDC_UART_rxPending = 0;
 
@@ -460,28 +460,28 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 	CDC_SFP_txBufferWritePos = 0;
 
 	/* register UART Bridge endpoint interrupt handler */
-	ep_indx = (((CDC_DIF1_BULK_IN_EP & 0x0F) << 1) + 1);
+	ep_indx = (((USB_CDC_UART_EP_BULK_IN & 0x0F) << 1) + 1);
 	ret = pUsbApi->core->RegisterEpHandler(hUsb, ep_indx, UART_bulk_in_hdlr, NULL);
 
 	if (ret != LPC_OK)
 		return ret;
 
 	/* register UART Bridge endpoint interrupt handler */
-	ep_indx = ((CDC_DIF1_BULK_OUT_EP & 0x0F) << 1);
+	ep_indx = ((USB_CDC_UART_EP_BULK_OUT & 0x0F) << 1);
 	ret = pUsbApi->core->RegisterEpHandler(hUsb, ep_indx, UART_bulk_out_hdlr, NULL);
 
 	if (ret != LPC_OK)
 		return ret;
 
 	/* register SFP endpoint interrupt handler */
-	ep_indx = (((CDC_DIF2_BULK_IN_EP & 0x0F) << 1) + 1);
+	ep_indx = (((USB_CDC_SFP_EP_BULK_IN & 0x0F) << 1) + 1);
 	ret = pUsbApi->core->RegisterEpHandler(hUsb, ep_indx, CDC_SFP_bulk_in_hdlr, NULL);
 
 	if (ret != LPC_OK)
 		return ret;
 
 	/* register SFP endpoint interrupt handler */
-	ep_indx = ((CDC_DIF2_BULK_OUT_EP & 0x0F) << 1);
+	ep_indx = ((USB_CDC_SFP_EP_BULK_OUT & 0x0F) << 1);
 	ret = pUsbApi->core->RegisterEpHandler(hUsb, ep_indx, CDC_SFP_bulk_out_hdlr, NULL);
 
 	if (ret != LPC_OK)
@@ -633,7 +633,7 @@ void UART_Flush() {
 	if (CDC_UART_rxReceived != 0) {	// if the buffer is not empty
 		while (CDC_UART_txBusy);
 		CDC_UART_txBusy = 1;
-		pUsbApi->hw->WriteEP(pUsbHandle, CDC_DIF1_BULK_IN_EP, (uint8_t*)CDC_UART_rxBuffer, CDC_UART_rxReceived);
+		pUsbApi->hw->WriteEP(pUsbHandle, USB_CDC_UART_EP_BULK_IN, (uint8_t*)CDC_UART_rxBuffer, CDC_UART_rxReceived);
 		CDC_UART_rxReceived = 0;
 	}
 
@@ -703,7 +703,7 @@ void CDC_Stream_flush(void) {
 		for (i=0; i<len; i++)
 			tmpTxBuf[i] = CDC_SFP_txBuffer[CDC_SFP_txBufferReadPos++ & CDC_SFP_TX_BUFFER_MASK];
 
-		pUsbApi->hw->WriteEP(pUsbHandle, CDC_DIF2_BULK_IN_EP, tmpTxBuf, len);
+		pUsbApi->hw->WriteEP(pUsbHandle, USB_CDC_SFP_EP_BULK_IN, tmpTxBuf, len);
 	}
 }
 
