@@ -87,6 +87,9 @@ volatile uint32_t CDC_UART_txBufferSent;
 volatile uint8_t CDC_UART_rxBuffer[UART_RX_BUFFER_SIZE];
 volatile uint16_t CDC_UART_rxReceived;
 
+volatile uint8_t CDC_UART_rxPending;
+volatile uint8_t CDC_UART_txBusy;
+
 /* SFP variables */
 #define CDC_SFP_RX_BUFFER_SIZE_N	7
 #define CDC_SFP_RX_BUFFER_MASK		((1 << CDC_SFP_RX_BUFFER_SIZE_N) - 1)
@@ -245,24 +248,26 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 }
 
 ErrorCode_t UART_bulk_in_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
+	CDC_UART_txBusy = 0;
 	return LPC_OK;
 }
 
 ErrorCode_t UART_bulk_out_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 	switch (event) {
 		case USB_EVT_OUT: {
-			if (CDC_UART_txBufferSent == CDC_UART_txBufferSize) {
-				CDC_UART_txBufferSize = pUsbApi->hw->ReadEP(hUsb, CDC_DIF1_BULK_OUT_EP, (uint8_t*)CDC_UART_txBuffer);
-				CDC_UART_txBufferSent = 0;
-
-				if (LPC_USART->LSR & BIT5) // THR register is empty
-					LPC_USART->THR = CDC_UART_txBuffer[CDC_UART_txBufferSent++];
-
+			if (CDC_UART_txBufferSent != CDC_UART_txBufferSize) {
+				CDC_UART_rxPending = 1;
 				return LPC_OK;
-			} else {
-				return ERR_USBD_UNHANDLED; // TODO: check if this sends NAK
 			}
-			break;
+
+			CDC_UART_txBufferSize = pUsbApi->hw->ReadEP(hUsb, CDC_DIF1_BULK_OUT_EP, (uint8_t*)CDC_UART_txBuffer);
+			CDC_UART_txBufferSent = 0;
+			CDC_UART_rxPending = 0;
+
+			if (LPC_USART->LSR & BIT5) // THR register is empty
+				LPC_USART->THR = CDC_UART_txBuffer[CDC_UART_txBufferSent++];
+
+			return LPC_OK;
 		}
 		default:
 			break;
@@ -318,8 +323,24 @@ void UART_IRQHandler() {
 	uint32_t flags = (LPC_USART->IIR >> 1) & 0x7; // parse interrupt flags
 
 	// Combined code for efficiency? and fault handling
-	if (flags == 0x3 || flags == 0x02 || flags == 0x06) {	// RLS, CTI or RDA interrupts
-		// TODO: remove timer_serial and add native CTI support
+	if (flags == 0x3) {	// Line error
+		LPC_USART->LSR;
+		LPC_USART->RBR;
+	} else if (flags == 0x2) { // RDA - FIFO trigger level reached (8 bytes)
+		uint32_t lsr;
+		uint8_t i = 7;	// Read 7 bytes (leave at least 1 byte in FIFO to trigger CTI)
+		while (i--) {
+			if ((lsr = LPC_USART->LSR) & 0x9E) {	// if there's any error - drop the byte
+				LPC_USART->RBR;
+			} else {			// else - buffer it
+				CDC_UART_rxBuffer[CDC_UART_rxReceived++] = LPC_USART->RBR;
+
+				if (CDC_UART_rxReceived == UART_RX_BUFFER_SIZE) {	// if the buffer is full - send it out
+					UART_Flush();
+				}
+			}
+		}
+	} else if (flags == 0x6) {	// CTI - no bytes received in a while
 		uint32_t lsr;
 		while ((lsr = LPC_USART->LSR) & 0x9F) {	// while data is available
 			if (lsr & 0x9E) {	// if there's any error - drop the byte
@@ -329,16 +350,21 @@ void UART_IRQHandler() {
 
 				if (CDC_UART_rxReceived == UART_RX_BUFFER_SIZE) {	// if the buffer is full - send it out
 					UART_Flush();
-					timer_serial = TIMER_STOP;
-				} else {	// else (re)set the timer
-					timer_serial = 10;	// 10ms
 				}
 			}
 		}
+		UART_Flush(); // force flush any remaining bytes
 	} else if (flags == 0x01) {		// THRE interrupt
 		if (CDC_UART_txBufferSent < CDC_UART_txBufferSize) {
 			// assuming that THR is empty at interrupt
 			LPC_USART->THR = CDC_UART_txBuffer[CDC_UART_txBufferSent++];
+		} else if (CDC_UART_rxPending) {
+			CDC_UART_txBufferSize = pUsbApi->hw->ReadEP(pUsbHandle, CDC_DIF1_BULK_OUT_EP, (uint8_t*)CDC_UART_txBuffer);
+			CDC_UART_txBufferSent = 0;
+			CDC_UART_rxPending = 0;
+
+			//if (LPC_USART->LSR & BIT5) // THR register is empty
+				LPC_USART->THR = CDC_UART_txBuffer[CDC_UART_txBufferSent++];
 		}
 	}
 }
@@ -420,6 +446,10 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 
 	CDC_UART_txBufferSent = 0;
 	CDC_UART_txBufferSize = 0;
+
+	CDC_UART_txBusy = 0;
+	CDC_UART_rxPending = 0;
+
 
 	CDC_SFP_rxPending = 0;
 	CDC_SFP_rxBufferReadPos = 0;
@@ -575,7 +605,7 @@ void UART_Init(uint32_t baudrate, uint8_t dataBits, parity_t parity, stop_bits_t
 	LPC_USART->DLL = divider % 256;
 	LPC_USART->FDR = (fracB << 4) | (fracA);
 	LPC_USART->LCR &= ~0x80;	// disable DLAB
-	LPC_USART->FCR = 0x07;		// enable and reset FIFO buffers
+	LPC_USART->FCR = (BIT0 | BIT1 | BIT2 | (2 << 6)); // enable and reset FIFO buffers, set RX FIFO triger level 2 (8 bytes)
 	LPC_USART->IER = 0; 		// All USART interrupts disabled
 
 	while ((LPC_USART->LSR & (BIT5 | BIT6)) != (BIT5 | BIT6)); //clear TX
@@ -601,6 +631,8 @@ void UART_Flush() {
 	NVIC_DisableIRQ(UART_IRQn);
 
 	if (CDC_UART_rxReceived != 0) {	// if the buffer is not empty
+		while (CDC_UART_txBusy);
+		CDC_UART_txBusy = 1;
 		pUsbApi->hw->WriteEP(pUsbHandle, CDC_DIF1_BULK_IN_EP, (uint8_t*)CDC_UART_rxBuffer, CDC_UART_rxReceived);
 		CDC_UART_rxReceived = 0;
 	}

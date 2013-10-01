@@ -43,14 +43,6 @@
 #include "IAP.h"
 
 void SysTick_Handler() {
-	/* Decrement UART timer and flush RX buffer on timeout */
-	if (timer_serial != TIMER_STOP) {
-		timer_serial--;
-		if (timer_serial == 0) {
-			UART_Flush();
-		}
-	}
-
 	uint8_t i;
 	for (i=0; i<INTERRUPT_COUNT; i++) {
 		if (timer_interrupts[i] != TIMER_STOP) {
@@ -172,7 +164,6 @@ SFPResult LedCallback(SFPFunction *msg) {
 int main(void) {
 	SystemCoreClockUpdate();
 
-	timer_serial = TIMER_STOP;
 	uint8_t i;
 	for (i=0; i<INTERRUPT_COUNT; i++)
 		timer_interrupts[i] = TIMER_STOP;
