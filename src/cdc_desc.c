@@ -62,6 +62,7 @@ ALIGN4 const uint8_t UPER_DeviceDescriptor[] = {
   0x01                               /* bNumConfigurations: one possible configuration*/
 };
 
+/* USB Standard Device Qualifier Descriptor */
 ALIGN4 const uint8_t UPER_DeviceQualifierDescriptor[] = {
   USB_DEVICE_QUALI_SIZE,			 /* bLength */
   USB_DEVICE_QUALIFIER_DESCRIPTOR_TYPE, /* bDescriptorType */
@@ -83,7 +84,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   WBVAL(                             /* wTotalLength */
     1*USB_CONFIGUARTION_DESC_SIZE +
 
-    1*0x08 + /* IAD size */
+    1*0x08 						  +  /* IAD size */
     1*USB_INTERFACE_DESC_SIZE     +  /* communication interface */
     0x0013                        +  /* CDC functions */
     1*USB_ENDPOINT_DESC_SIZE      +  /* interrupt endpoint */
@@ -92,7 +93,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
     2*USB_ENDPOINT_DESC_SIZE      +  /* bulk endpoints */
 
 
-    1*0x08 + /* IAD size */
+    1*0x08 						  +  /* IAD size */
     1*USB_INTERFACE_DESC_SIZE     +  /* communication interface */
     0x0013                        +  /* CDC functions */
     1*USB_ENDPOINT_DESC_SIZE      +  /* interrupt endpoint */
@@ -104,9 +105,8 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   0x04,                              /* bNumInterfaces */
   0x01,                              /* bConfigurationValue: 0x01 is used to select this configuration */
   0x00,                              /* iConfiguration: no string to describe this configuration */
-  USB_CONFIG_BUS_POWERED /*|*/       /* bmAttributes */
-/*USB_CONFIG_REMOTE_WAKEUP*/,
-  USB_CONFIG_POWER_MA(50),          /* bMaxPower, device power consumption is 100 mA */
+  USB_CONFIG_BUS_POWERED,            /* bmAttributes */
+  USB_CONFIG_POWER_MA(50),           /* bMaxPower, device power consumption is 100 mA */
 
 
   /* IAD 1 Descriptor */
@@ -117,7 +117,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   CDC_COMMUNICATION_INTERFACE_CLASS, /* bInterfaceClass: Communication Interface Class */
   CDC_ABSTRACT_CONTROL_MODEL,        /* bInterfaceSubClass: Abstract Control Model */
   0x00,                              /* bInterfaceProtocol: no protocol used */
-  0x05,                              /* iInterface: */
+  0x04,                              /* iInterface: */
 
   /* Interface 0, Alternate Setting 0, Communication class interface descriptor */
   USB_INTERFACE_DESC_SIZE,           /* bLength */
@@ -128,7 +128,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   CDC_COMMUNICATION_INTERFACE_CLASS, /* bInterfaceClass: Communication Interface Class */
   CDC_ABSTRACT_CONTROL_MODEL,        /* bInterfaceSubClass: Abstract Control Model */
   0x00,                              /* bInterfaceProtocol: no protocol used */
-  0x05,                              /* iInterface: */
+  0x04,                              /* iInterface: */
   /*Header Functional Descriptor*/
   0x05,                              /* bLength: Endpoint Descriptor size */
   CDC_CS_INTERFACE,                  /* bDescriptorType: CS_INTERFACE */
@@ -168,7 +168,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   CDC_DATA_INTERFACE_CLASS,          /* bInterfaceClass: Data Interface Class */
   0x00,                              /* bInterfaceSubClass: no subclass available */
   0x00,                              /* bInterfaceProtocol: no protocol used */
-  0x05,                              /* iInterface: */
+  0x04,                              /* iInterface: */
   /* Endpoint, EP2 Bulk Out */
   USB_ENDPOINT_DESC_SIZE,            /* bLength */
   USB_ENDPOINT_DESCRIPTOR_TYPE,      /* bDescriptorType */
@@ -185,7 +185,6 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   0x00,                              /* bInterval: ignore for Bulk transfer */
 
 
-
   /* IAD 2 Descriptor */
   0x08,                              /* sizeof(USB_IAD_DSC) */
   0x0B,                              /* Interface assocication descriptor type */
@@ -194,7 +193,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   CDC_COMMUNICATION_INTERFACE_CLASS, /* bInterfaceClass: Communication Interface Class */
   CDC_ABSTRACT_CONTROL_MODEL,        /* bInterfaceSubClass: Abstract Control Model */
   0x00,                              /* bInterfaceProtocol: no protocol used */
-  0x04,                              /* iInterface: */
+  0x05,                              /* iInterface: */
 
 /* Interface 2, Alternate Setting 0, Communication class interface descriptor */
   USB_INTERFACE_DESC_SIZE,           /* bLength */
@@ -205,7 +204,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   CDC_COMMUNICATION_INTERFACE_CLASS, /* bInterfaceClass: Communication Interface Class */
   CDC_ABSTRACT_CONTROL_MODEL,        /* bInterfaceSubClass: Abstract Control Model */
   0x00,                              /* bInterfaceProtocol: no protocol used */
-  0x04,                              /* iInterface: */
+  0x05,                              /* iInterface: */
 /*Header Functional Descriptor*/
   0x05,                              /* bLength: Endpoint Descriptor size */
   CDC_CS_INTERFACE,                  /* bDescriptorType: CS_INTERFACE */
@@ -245,7 +244,7 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
   CDC_DATA_INTERFACE_CLASS,          /* bInterfaceClass: Data Interface Class */
   0x00,                              /* bInterfaceSubClass: no subclass available */
   0x00,                              /* bInterfaceProtocol: no protocol used */
-  0x04,                              /* iInterface: */
+  0x05,                              /* iInterface: */
 /* Endpoint, EP4 Bulk Out */
   USB_ENDPOINT_DESC_SIZE,            /* bLength */
   USB_ENDPOINT_DESCRIPTOR_TYPE,      /* bDescriptorType */
@@ -267,12 +266,12 @@ ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
 
 /* USB String Descriptor (optional) */
 ALIGN4 const uint8_t UPER_StringDescriptor[] = {
-/* Index 0x00: LANGID Codes */
+  /* Index 0x00: LANGID Codes */
   0x04,                              /* bLength */
   USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
   WBVAL(0x0409), /* US English */    /* wLANGID */
   /* Index 0x01: Manufacturer */
-  (8*2 + 2),                        /* bLength (8 Char + Type + length) */
+  (8*2 + 2),                         /* bLength (8 Char + Type + length) */
   USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
   '8', 0,
   'd', 0,
@@ -307,23 +306,26 @@ ALIGN4 const uint8_t UPER_StringDescriptor[] = {
   'r', 0,
   'd', 0,
   /* Index 0x03: Serial Number */
-  (8*2 + 2),                        /* bLength (8 Char + Type + length) */
+  (0*2 + 2),                         /* bLength (0 Char + Type + length) */
   USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
+  /* Index 0x04: Interface 0, Alternate Setting 0 */
+  ( 8*2 + 2),                        /* bLength (8 Char + Type + length) */
+  USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
+  'U', 0,
+  'P', 0,
+  'E', 0,
   'R', 0,
-  'e', 0,
-  'v', 0,
   ' ', 0,
-  '0', 0,
-  '.', 0,
-  '9', 0,
-  'b', 0,
-/* Index 0x04: Interface 0, Alternate Setting 0 */
-  ( 11*2 + 2),                        /* bLength (11 Char + Type + length) */
+  'C', 0,
+  'O', 0,
+  'M', 0,
+  /* Index 0x05: Interface 2, Alternate Setting 0 */
+  (11*2 + 2),                        /* bLength (11 Char + Type + length) */
   USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
-  'U',0,
-  'A',0,
-  'R',0,
-  'T',0,
+  'U', 0,
+  'A', 0,
+  'R', 0,
+  'T', 0,
   ' ', 0,
   'B', 0,
   'r', 0,
@@ -331,17 +333,6 @@ ALIGN4 const uint8_t UPER_StringDescriptor[] = {
   'd', 0,
   'g', 0,
   'e', 0,
-  /* Index 0x05: Interface 2, Alternate Setting 0 */
-  ( 8*2 + 2),                        /* bLength (8 Char + Type + length) */
-  USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
-  'U',0,
-  'P',0,
-  'E',0,
-  'R',0,
-  ' ', 0,
-  'C', 0,
-  'O', 0,
-  'M', 0,
 };
 
 ALIGN4 uint8_t UPER_USBSerialStringDescriptor[] = {
