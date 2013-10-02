@@ -45,7 +45,7 @@
 #endif
 
 /* USB Standard Device Descriptor */
-ALIGN4 const uint8_t VCOM_DeviceDescriptor[] = {
+ALIGN4 const uint8_t UPER_DeviceDescriptor[] = {
   USB_DEVICE_DESC_SIZE,              /* bLength */
   USB_DEVICE_DESCRIPTOR_TYPE,        /* bDescriptorType */
   WBVAL(0x0200), /* 2.0 */           /* bcdUSB */
@@ -62,9 +62,21 @@ ALIGN4 const uint8_t VCOM_DeviceDescriptor[] = {
   0x01                               /* bNumConfigurations: one possible configuration*/
 };
 
+ALIGN4 const uint8_t UPER_DeviceQualifierDescriptor[] = {
+  USB_DEVICE_QUALI_SIZE,			 /* bLength */
+  USB_DEVICE_QUALIFIER_DESCRIPTOR_TYPE, /* bDescriptorType */
+  WBVAL(0x0200),					 /* bcdUSB */
+  0xEF,								 /* bDeviceClass Misc */
+  0x02,								 /* bDeviceSubClass */
+  0x01,								 /* bDeviceProtocol - Interface Association Descriptor */
+  USB_MAX_PACKET0,					 /* bMaxPacketSize0 */
+  0x01,								 /* bNumConfigurations: one possible configuration*/
+  0x00								 /* bReserved */
+};
+
 /* USB Configuration Descriptor */
 /*   All Descriptors (Configuration, Interface, Endpoint, Class, Vendor */
-ALIGN4 const uint8_t VCOM_ConfigDescriptor[] = {
+ALIGN4 const uint8_t UPER_ConfigDescriptor[] = {
 /* Configuration 1 */
   USB_CONFIGUARTION_DESC_SIZE,       /* bLength */
   USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType */
@@ -254,7 +266,7 @@ ALIGN4 const uint8_t VCOM_ConfigDescriptor[] = {
 };
 
 /* USB String Descriptor (optional) */
-ALIGN4 const uint8_t VCOM_StringDescriptor[] = {
+ALIGN4 const uint8_t UPER_StringDescriptor[] = {
 /* Index 0x00: LANGID Codes */
   0x04,                              /* bLength */
   USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */

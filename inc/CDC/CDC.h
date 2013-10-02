@@ -39,9 +39,10 @@
 
 #include <SFP/SFPStream.h>
 
-extern uint8_t VCOM_DeviceDescriptor[];
-extern uint8_t VCOM_StringDescriptor[];
-extern uint8_t VCOM_ConfigDescriptor[];
+extern uint8_t UPER_DeviceDescriptor[];
+extern uint8_t UPER_DeviceQualifierDescriptor[];
+extern uint8_t UPER_StringDescriptor[];
+extern uint8_t UPER_ConfigDescriptor[];
 
 extern uint8_t UPER_USBSerialStringDescriptor[];
 

@@ -131,10 +131,7 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 					&& packet.bRequest == 0x06 // Get descriptor
 					&& packet.wValue.WB.H == 0x06 // Get Device Qualifier Descriptor
 				) {
-				uint8_t dq[] = { 0x0A, USB_DEVICE_QUALIFIER_DESCRIPTOR_TYPE,
-						WBVAL(0x0200), 0xEF, 0x02, 0x01, USB_MAX_PACKET0, 0x01,
-						0x00 };
-				pUsbApi->hw->WriteEP(pUsbHandle, USB_ENDPOINT_IN(0), dq, 10);
+				pUsbApi->hw->WriteEP(pUsbHandle, USB_ENDPOINT_IN(0), UPER_DeviceQualifierDescriptor, USB_DEVICE_QUALI_SIZE);
 				return LPC_OK;
 			}
 
@@ -428,10 +425,10 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 
 	/* Initialize Descriptor pointers */
 	memset((void*) &desc, 0, sizeof(USB_CORE_DESCS_T));
-	desc.device_desc = (uint8_t *) &VCOM_DeviceDescriptor[0];
-	desc.string_desc = (uint8_t *) &VCOM_StringDescriptor[0];
-	desc.full_speed_desc = (uint8_t *) &VCOM_ConfigDescriptor[0];
-	desc.high_speed_desc = (uint8_t *) &VCOM_ConfigDescriptor[0];
+	desc.device_desc = (uint8_t *) &UPER_DeviceDescriptor[0];
+	desc.string_desc = (uint8_t *) &UPER_StringDescriptor[0];
+	desc.full_speed_desc = (uint8_t *) &UPER_ConfigDescriptor[0];
+	desc.high_speed_desc = (uint8_t *) &UPER_ConfigDescriptor[0];
 	//desc.device_qualifier = (uint8_t*) &VCOM_DeviceQualifier[0];
 
 	/* USB Initialization */
@@ -443,6 +440,7 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 
 	/* Initialize private data */
 	pUsbHandle = hUsb;
+
 
 	CDC_UART_txBufferSent = 0;
 	CDC_UART_txBufferSize = 0;
