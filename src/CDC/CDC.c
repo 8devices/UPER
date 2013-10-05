@@ -51,9 +51,11 @@ typedef enum {
 } parity_t;
 
 /* Private function declarations */
+#ifndef SFP_PORT_ONLY
 void UART_Init(uint32_t baudrate, uint8_t dataBits, parity_t parity, stop_bits_t stopBits);
 void UART_Close(void);
 void UART_Flush(void);
+#endif
 
 uint32_t CDC_Stream_available(void);
 uint32_t CDC_Stream_read(uint8_t *buf, uint32_t len);
@@ -70,6 +72,7 @@ USBD_HANDLE_T pUsbHandle;
 uint8_t tmpRxBuf[USB_HS_MAX_BULK_PACKET];
 uint8_t tmpTxBuf[USB_HS_MAX_BULK_PACKET];
 
+#ifndef SFP_PORT_ONLY
 /* UART Bridge variables */
 
 volatile struct {
@@ -89,6 +92,7 @@ volatile uint16_t CDC_UART_rxReceived;
 
 volatile uint8_t CDC_UART_rxPending;
 volatile uint8_t CDC_UART_txBusy;
+#endif
 
 /* SFP variables */
 #define CDC_SFP_RX_BUFFER_SIZE_N	7
@@ -172,6 +176,7 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 				) {
 				uint8_t lcs[] = { 0x80, 0x25, 0x00, 0x00, 0x00, 0x00, 0x08 }; // Default 9600 8n1
 
+#ifndef SFP_PORT_ONLY
 				if (packet.wIndex.W == USB_CDC_UART_CIF_NUM) {
 					lcs[0] = CDC_UART_Config.baudrate;
 					lcs[1] = CDC_UART_Config.baudrate >> 8;
@@ -184,6 +189,7 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 
 					lcs[6] = CDC_UART_Config.dataBits;
 				}
+#endif
 
 				pCtrl->EP0Data.Count = 7;
 				pCtrl->EP0Data.pData = (uint8_t*)&lcs;
@@ -207,6 +213,7 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 			} else {
 				pUsbApi->core->StatusInStage(hUsb);
 
+#ifndef SFP_PORT_ONLY
 				if ( (packet.bmRequestType.B == REQ_TYPE(REQUEST_HOST_TO_DEVICE,REQUEST_CLASS,REQUEST_TO_INTERFACE) )
 					  && (packet.bRequest        == 0x20 ) // SetLineCoding
 					  && (packet.wValue.W        == (0<<8) )    // Zero
@@ -221,6 +228,7 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 
 					UART_Init(baudrate, dataBits, parity, stopbits);
 				}
+#endif
 			}
 
 			return LPC_OK;
@@ -244,6 +252,7 @@ ErrorCode_t EP0_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 	return ERR_USBD_UNHANDLED;
 }
 
+#ifndef SFP_PORT_ONLY
 ErrorCode_t UART_bulk_in_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 	CDC_UART_txBusy = 0;
 	return LPC_OK;
@@ -271,6 +280,7 @@ ErrorCode_t UART_bulk_out_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 	}
 	return LPC_OK;
 }
+#endif
 
 ErrorCode_t CDC_SFP_bulk_in_hdlr(USBD_HANDLE_T hUsb, void* data, uint32_t event) {
 	// TODO: add managing for 64b packets (send ZLP)
@@ -316,6 +326,7 @@ void USB_IRQHandler(void) {
 	pUsbApi->hw->ISR(pUsbHandle);
 }
 
+#ifndef SFP_PORT_ONLY
 void UART_IRQHandler() {
 	uint32_t flags = (LPC_USART->IIR >> 1) & 0x7; // parse interrupt flags
 
@@ -365,6 +376,7 @@ void UART_IRQHandler() {
 		}
 	}
 }
+#endif
 
 char inline CDC_intToBase64(uint8_t i) {
 	i &= 63;
@@ -442,11 +454,13 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 	pUsbHandle = hUsb;
 
 
+#ifndef SFP_PORT_ONLY
 	CDC_UART_txBufferSent = 0;
 	CDC_UART_txBufferSize = 0;
 
 	CDC_UART_txBusy = 0;
 	CDC_UART_rxPending = 0;
+#endif
 
 
 	CDC_SFP_rxPending = 0;
@@ -457,6 +471,7 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 	CDC_SFP_txBufferReadPos = 0;
 	CDC_SFP_txBufferWritePos = 0;
 
+#ifndef SFP_PORT_ONLY
 	/* register UART Bridge endpoint interrupt handler */
 	ep_indx = (((USB_CDC_UART_EP_BULK_IN & 0x0F) << 1) + 1);
 	ret = pUsbApi->core->RegisterEpHandler(hUsb, ep_indx, UART_bulk_in_hdlr, NULL);
@@ -470,6 +485,7 @@ ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
 
 	if (ret != LPC_OK)
 		return ret;
+#endif
 
 	/* register SFP endpoint interrupt handler */
 	ep_indx = (((USB_CDC_SFP_EP_BULK_IN & 0x0F) << 1) + 1);
@@ -523,14 +539,17 @@ void USB_pin_clk_init(void) {
 	LPC_IOCON ->PIO0_6 &= ~0x07;
 	LPC_IOCON ->PIO0_6 |= (0x01 << 0); /* Secondary function SoftConn */
 
+#ifndef SFP_PORT_ONLY
 	LPC_IOCON->PIO0_18 &= ~0x07;
 	LPC_IOCON->PIO0_18 |= 0x01;
 	LPC_IOCON->PIO0_19 &= ~0x07;
 	LPC_IOCON->PIO0_19 |= 0x01;
+#endif
 
 	return;
 }
 
+#ifndef SFP_PORT_ONLY
 /* Part 1: Functions for UART Bridge */
 
 void UART_Init(uint32_t baudrate, uint8_t dataBits, parity_t parity, stop_bits_t stopBits) {
@@ -638,6 +657,7 @@ void UART_Flush() {
 	NVIC_EnableIRQ(UART_IRQn);
 }
 
+#endif
 
 /* Part 2: Functions for SFP CDC port */
 
