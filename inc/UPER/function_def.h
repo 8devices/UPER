@@ -1,5 +1,5 @@
 /**
- * @file	main.h
+ * @file	function_def.h
  * @author  Giedrius Medzevicius <giedrius@8devices.com>
  *
  * @section LICENSE

@@ -1,5 +1,5 @@
 /**
- * @file	main.h
+ * @file	CDC.h
  * @author  Giedrius Medzevicius <giedrius@8devices.com>
  *
  * @section LICENSE
