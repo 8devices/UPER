@@ -102,8 +102,8 @@ SFPResult lpc_system_registerRead(SFPFunction *msg) {
 	if (func == NULL) return SFP_ERR_ALLOC_FAILED;
 
 	SFPFunction_setType(func, SFPFunction_getType(msg));
-	SFPFunction_setID(func, UPER_FUNCTION_ID_OUT_REGISTERREAD);
-	SFPFunction_setName(func, UPER_FUNCTION_NAME_OUT_REGISTERREAD);
+	SFPFunction_setID(func, UPER_FID_REGISTERREAD);
+	SFPFunction_setName(func, UPER_FNAME_REGISTERREAD);
 	SFPFunction_addArgument_int32(func, p_addr);
 	SFPFunction_addArgument_int32(func, value);
 	SFPFunction_send(func, &stream);
@@ -120,8 +120,8 @@ SFPResult lpc_system_getDeviceInfo(SFPFunction *msg) {
 	if (func == NULL) return SFP_ERR_ALLOC_FAILED;
 
 	SFPFunction_setType(func, SFPFunction_getType(msg));
-	SFPFunction_setID(func, UPER_FUNCTION_ID_OUT_GETDEVICEINFO);
-	SFPFunction_setName(func, UPER_FUNCTION_NAME_OUT_GETDEVICEINFO);
+	SFPFunction_setID(func, UPER_FID_GETDEVICEINFO);
+	SFPFunction_setName(func, UPER_FNAME_GETDEVICEINFO);
 	SFPFunction_addArgument_int32(func, UPER_FIRMWARE_VERSION);
 	SFPFunction_addArgument_barray(func, (uint8_t*)&GUID[0], 16);
 	SFPFunction_addArgument_int32(func, IAP_GetPartNumber());
@@ -198,47 +198,47 @@ int main(void) {
 	SFPServer_addFunctionHandler(server, "led", 0, LedCallback);
 
 	/* GPIO/Pin functions */
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SETPRIMARY,	 UPER_FUNCTION_ID_IN_SETPRIMARY,	lpc_config_setPrimary);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SETSECONDARY, UPER_FUNCTION_ID_IN_SETSECONDARY,	lpc_config_setSecondary);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SETPRIMARY,	 UPER_FID_SETPRIMARY,	lpc_config_setPrimary);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SETSECONDARY, UPER_FID_SETSECONDARY,	lpc_config_setSecondary);
 
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PINMODE,      UPER_FUNCTION_ID_IN_PINMODE,		lpc_pinMode);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_DIGITALWRITE, UPER_FUNCTION_ID_IN_DIGITALWRITE,	lpc_digitalWrite);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_DIGITALREAD,  UPER_FUNCTION_ID_IN_DIGITALREAD,	lpc_digitalRead);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PINMODE,      UPER_FID_PINMODE,		lpc_pinMode);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_DIGITALWRITE, UPER_FID_DIGITALWRITE,	lpc_digitalWrite);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_DIGITALREAD,  UPER_FID_DIGITALREAD,	lpc_digitalRead);
 
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_ATTACHINTERRUPT, UPER_FUNCTION_ID_IN_ATTACHINTERRUPT, lpc_attachInterrupt);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_DETACHINTERRUPT, UPER_FUNCTION_ID_IN_DETACHINTERRUPT, lpc_detachInterrupt);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_ATTACHINTERRUPT, UPER_FID_ATTACHINTERRUPT, lpc_attachInterrupt);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_DETACHINTERRUPT, UPER_FID_DETACHINTERRUPT, lpc_detachInterrupt);
 
 	/* ADC functions */
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_ANALOGREAD, UPER_FUNCTION_ID_IN_ANALOGREAD, lpc_analogRead);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_ANALOGREAD, UPER_FID_ANALOGREAD, lpc_analogRead);
 
 	/* SPI functions */
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI0BEGIN, UPER_FUNCTION_ID_IN_SPI0BEGIN, lpc_spi0_begin);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI0TRANS, UPER_FUNCTION_ID_IN_SPI0TRANS, lpc_spi0_trans);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI0END,   UPER_FUNCTION_ID_IN_SPI0END, lpc_spi0_end);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SPI0BEGIN, UPER_FID_SPI0BEGIN, lpc_spi0_begin);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SPI0TRANS, UPER_FID_SPI0TRANS, lpc_spi0_trans);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SPI0END,   UPER_FID_SPI0END, lpc_spi0_end);
 
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI1BEGIN, UPER_FUNCTION_ID_IN_SPI1BEGIN, lpc_spi1_begin);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI1TRANS, UPER_FUNCTION_ID_IN_SPI1TRANS, lpc_spi1_trans);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_SPI1END,   UPER_FUNCTION_ID_IN_SPI1END, lpc_spi1_end);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SPI1BEGIN, UPER_FID_SPI1BEGIN, lpc_spi1_begin);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SPI1TRANS, UPER_FID_SPI1TRANS, lpc_spi1_trans);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_SPI1END,   UPER_FID_SPI1END, lpc_spi1_end);
 
 	/* I2C functions */
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_I2CBEGIN, UPER_FUNCTION_ID_IN_I2CBEGIN, lpc_i2c_begin);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_I2CTRANS, UPER_FUNCTION_ID_IN_I2CTRANS, lpc_i2c_trans);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_I2CEND,   UPER_FUNCTION_ID_IN_I2CEND, lpc_i2c_end);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_I2CBEGIN, UPER_FID_I2CBEGIN, lpc_i2c_begin);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_I2CTRANS, UPER_FID_I2CTRANS, lpc_i2c_trans);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_I2CEND,   UPER_FID_I2CEND, lpc_i2c_end);
 
 	/* PWM functions */
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PWM0BEGIN, UPER_FUNCTION_ID_IN_PWM0BEGIN, lpc_pwm0_begin);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PWM0SET,   UPER_FUNCTION_ID_IN_PWM0SET, lpc_pwm0_set);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PWM0END,   UPER_FUNCTION_ID_IN_PWM0END, lpc_pwm0_end);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM0BEGIN, UPER_FID_PWM0BEGIN, lpc_pwm0_begin);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM0SET,   UPER_FID_PWM0SET, lpc_pwm0_set);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM0END,   UPER_FID_PWM0END, lpc_pwm0_end);
 
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PWM1BEGIN, UPER_FUNCTION_ID_IN_PWM1BEGIN, lpc_pwm1_begin);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PWM1SET,   UPER_FUNCTION_ID_IN_PWM1SET, lpc_pwm1_set);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_PWM1END,   UPER_FUNCTION_ID_IN_PWM1END, lpc_pwm1_end);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM1BEGIN, UPER_FID_PWM1BEGIN, lpc_pwm1_begin);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM1SET,   UPER_FID_PWM1SET, lpc_pwm1_set);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM1END,   UPER_FID_PWM1END, lpc_pwm1_end);
 
 
 	/* Other functions */
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_REGISTERWRITE, UPER_FUNCTION_ID_IN_REGISTERWRITE, lpc_system_registerWrite);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_REGISTERREAD,  UPER_FUNCTION_ID_IN_REGISTERREAD, lpc_system_registerRead);
-	SFPServer_addFunctionHandler(server, UPER_FUNCTION_NAME_IN_GETDEVICEINFO,  UPER_FUNCTION_ID_IN_GETDEVICEINFO, lpc_system_getDeviceInfo);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_REGISTERWRITE, UPER_FID_REGISTERWRITE, lpc_system_registerWrite);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_REGISTERREAD,  UPER_FID_REGISTERREAD, lpc_system_registerRead);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_GETDEVICEINFO,  UPER_FID_GETDEVICEINFO, lpc_system_getDeviceInfo);
 
 
 	SFPServer_loop(server);

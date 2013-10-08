@@ -203,8 +203,8 @@ SFPResult lpc_digitalRead(SFPFunction *msg) {
 	if (outFunc == NULL) return SFP_ERR_ALLOC_FAILED;
 
 	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-	SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_DIGITALREAD);
-	SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_DIGITALREAD);
+	SFPFunction_setID(outFunc, UPER_FID_DIGITALREAD);
+	SFPFunction_setName(outFunc, UPER_FNAME_DIGITALREAD);
 	SFPFunction_addArgument_int32(outFunc, pin);
 	SFPFunction_addArgument_int32(outFunc, val);
 	SFPFunction_send(outFunc, &stream);
@@ -303,8 +303,8 @@ static inline void GPIO_SEND_INT(uint8_t intID, uint8_t intEvt) {
 	SFPFunction *func = SFPFunction_new();
 	if (func != NULL) {
 		SFPFunction_setType(func, LPC_INTERRUPT_FUNCTION_TYPE[intID]);
-		SFPFunction_setID(func, UPER_FUNCTION_ID_OUT_INTERRUPT);
-		SFPFunction_setName(func, UPER_FUNCTION_NAME_OUT_INTERRUPT);
+		SFPFunction_setID(func, UPER_FID_INTERRUPT);
+		SFPFunction_setName(func, UPER_FNAME_INTERRUPT);
 		SFPFunction_addArgument_int32(func, intID);
 		SFPFunction_addArgument_int32(func, intEvt);
 		SFPFunction_send(func, &stream);

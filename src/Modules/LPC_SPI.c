@@ -113,8 +113,8 @@ SFPResult lpc_spi0_trans(SFPFunction *msg) {
 		}
 
 		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-		SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_SPI0TRANS);
-		SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_SPI0TRANS);
+		SFPFunction_setID(outFunc, UPER_FID_SPI0TRANS);
+		SFPFunction_setName(outFunc, UPER_FNAME_SPI0TRANS);
 		SFPFunction_addArgument_barray(outFunc, readBuf, dataSize);
 		SFPFunction_send(outFunc, &stream);
 		SFPFunction_delete(outFunc);
@@ -216,8 +216,8 @@ SFPResult lpc_spi1_trans(SFPFunction *msg) {
 		}
 
 		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-		SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_SPI1TRANS);
-		SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_SPI1TRANS);
+		SFPFunction_setID(outFunc, UPER_FID_SPI1TRANS);
+		SFPFunction_setName(outFunc, UPER_FNAME_SPI1TRANS);
 		SFPFunction_addArgument_barray(outFunc, readBuf, dataSize);
 		SFPFunction_send(outFunc, &stream);
 		SFPFunction_delete(outFunc);

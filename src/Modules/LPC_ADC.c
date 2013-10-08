@@ -61,8 +61,8 @@ SFPResult lpc_analogRead(SFPFunction *msg) {
 	if (outFunc == NULL) return SFP_ERR_ALLOC_FAILED;
 
 	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-	SFPFunction_setID(outFunc, UPER_FUNCTION_ID_OUT_ANALOGREAD);
-	SFPFunction_setName(outFunc, UPER_FUNCTION_NAME_OUT_ANALOGREAD);
+	SFPFunction_setID(outFunc, UPER_FID_ANALOGREAD);
+	SFPFunction_setName(outFunc, UPER_FNAME_ANALOGREAD);
 	SFPFunction_addArgument_int32(outFunc, pin);
 	SFPFunction_addArgument_int32(outFunc, val);
 	SFPFunction_send(outFunc, &stream);
