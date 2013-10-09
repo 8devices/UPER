@@ -42,18 +42,6 @@
 
 #include "IAP.h"
 
-void SysTick_Handler() {
-	uint8_t i;
-	for (i=0; i<INTERRUPT_COUNT; i++) {
-		if (timer_interrupts[i] != TIMER_STOP) {
-			timer_interrupts[i]--;
-			if (timer_interrupts[i] == 0) {
-				GPIO_EnableInterrupt(i);
-			}
-		}
-	}
-}
-
 inline uint8_t isValidRegisterAddress(uint32_t addr) {
 
 	if (addr >= 0x40000000 && addr < 0x40020000) return 1;	// I2C, WWDT, USART, timers, ADC
@@ -164,11 +152,7 @@ SFPResult LedCallback(SFPFunction *msg) {
 int main(void) {
 	SystemCoreClockUpdate();
 
-	uint8_t i;
-	for (i=0; i<INTERRUPT_COUNT; i++)
-		timer_interrupts[i] = TIMER_STOP;
-
-	SysTick_Config(SystemCoreClock/1000);	// Configure Systick to run at 1kHz (1ms)
+	Time_init();
 
 	IAP_GetSerialNumber(GUID);
 
@@ -207,6 +191,8 @@ int main(void) {
 
 	SFPServer_addFunctionHandler(server, UPER_FNAME_ATTACHINTERRUPT, UPER_FID_ATTACHINTERRUPT, lpc_attachInterrupt);
 	SFPServer_addFunctionHandler(server, UPER_FNAME_DETACHINTERRUPT, UPER_FID_DETACHINTERRUPT, lpc_detachInterrupt);
+
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PULSEIN, UPER_FID_PULSEIN, lpc_pulseIn);
 
 	/* ADC functions */
 	SFPServer_addFunctionHandler(server, UPER_FNAME_ANALOGREAD, UPER_FID_ANALOGREAD, lpc_analogRead);

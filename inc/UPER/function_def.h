@@ -46,6 +46,7 @@
 #define UPER_FID_ATTACHINTERRUPT	6
 #define UPER_FID_DETACHINTERRUPT	7
 #define UPER_FID_INTERRUPT			8
+#define UPER_FID_PULSEIN			9
 
 #define UPER_FID_ANALOGREAD			10
 
@@ -86,6 +87,7 @@
 #define UPER_FNAME_ATTACHINTERRUPT	"attachInterrupt"
 #define UPER_FNAME_DETACHINTERRUPT	"detachInterrupt"
 #define UPER_FNAME_INTERRUPT		"interrupt"
+#define UPER_FNAME_PULSEIN			"pulseIn"
 
 #define UPER_FNAME_ANALOGREAD		"analogRead"
 

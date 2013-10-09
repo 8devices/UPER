@@ -49,13 +49,10 @@
 
 #include <MemoryManager/MemoryManager.h>
 
+#include "time.h"
+
 SFPStream stream;
 
 uint32_t GUID[4];
-
-#define TIMER_STOP	0xFFFFFFFF
-#define INTERRUPT_COUNT 8
-
-volatile uint32_t timer_interrupts[INTERRUPT_COUNT];
 
 #endif /* MAIN_H_ */

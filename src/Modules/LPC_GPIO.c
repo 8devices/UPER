@@ -32,9 +32,6 @@
 
 #include "Modules/LPC_GPIO.h"
 
-
-#define LPC_PIN_COUNT	34
-
 uint8_t const LPC_PIN_IDS[] = {
 		0+20,	0+2,	24+26,	24+27,	24+20,	0+21,	24+23,	24+24,	// 8
 		0+7,	24+28,	24+31,	24+21,	0+8,	0+9,	0+10,	24+29,	// 16
@@ -78,7 +75,7 @@ uint8_t const LPC_PIN_SECONDARY_FUNCTION[] = {
 		0x02 /* ADC1 */,	0x02 /* ADC0 */,	// 34
 };
 
-volatile SFPFunctionType LPC_INTERRUPT_FUNCTION_TYPE[8];
+static volatile SFPFunctionType LPC_INTERRUPT_FUNCTION_TYPE[LPC_INTERRUPT_COUNT];
 
 void lpc_config_gpioInit() {
 	uint8_t pin;
@@ -213,6 +210,64 @@ SFPResult lpc_digitalRead(SFPFunction *msg) {
 	return SFP_OK;
 }
 
+SFPResult lpc_pulseIn(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 3) return SFP_ERR_ARG_COUNT;
+
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(msg, 2) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
+
+	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+	uint8_t levelMask = (SFPFunction_getArgument_int32(msg, 1) == 0 ? 0 : 1);
+	uint32_t timeout = SFPFunction_getArgument_int32(msg, 2);
+
+	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
+
+	uint8_t port = 0;
+	uint8_t pinNum = LPC_PIN_IDS[pin];
+	if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
+		port = 1;
+		pinNum -= 24;
+	}
+
+	levelMask <<= pinNum; // shift BIT0 to pin place
+
+	uint32_t startTimeUs = Time_getSystemTime_us();
+	uint32_t passedTimeUs = 0;
+
+	while ((LPC_GPIO->PIN[port] & (1 << pinNum)) == levelMask) {	// Wait while signal is on
+		if ((passedTimeUs=Time_getSystemTime_us()-startTimeUs) >= timeout)
+			break;
+	}
+
+	while ((LPC_GPIO->PIN[port] & (1 << pinNum)) != levelMask) { // Wait while signal is off
+		if ((passedTimeUs=Time_getSystemTime_us()-startTimeUs) >= timeout)
+			break;
+	}
+
+	uint32_t signalStartTime = Time_getSystemTime_us();
+
+	while ((LPC_GPIO->PIN[port] & (1 << pinNum)) == levelMask) {	// Wait while signal is on
+		if ((passedTimeUs=Time_getSystemTime_us()-startTimeUs) >= timeout)
+			break;
+	}
+	uint32_t signalDuration = Time_getSystemTime_us()-signalStartTime;
+
+	SFPFunction *outFunc = SFPFunction_new();
+
+	if (outFunc == NULL) return SFP_ERR_ALLOC_FAILED;
+
+	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+	SFPFunction_setID(outFunc, UPER_FID_PULSEIN);
+	SFPFunction_setName(outFunc, UPER_FNAME_PULSEIN);
+	SFPFunction_addArgument_int32(outFunc, (passedTimeUs < timeout ? signalDuration : 0));
+	SFPFunction_send(outFunc, &stream);
+	SFPFunction_delete(outFunc);
+
+	return SFP_OK;
+}
+
 SFPResult lpc_attachInterrupt(SFPFunction *func) {
 	if (SFPFunction_getArgumentCount(func) != 3)
 		return SFP_ERR_ARG_COUNT;
@@ -226,7 +281,7 @@ SFPResult lpc_attachInterrupt(SFPFunction *func) {
 	uint8_t p_pin = SFPFunction_getArgument_int32(func, 1);	// pin ID
 	uint8_t p_mode = SFPFunction_getArgument_int32(func, 2);	// interrupt mode
 
-	if (p_pin >= LPC_PIN_COUNT || p_intID >= INTERRUPT_COUNT || p_mode > 4) return SFP_ERR_ARG_VALUE;
+	if (p_pin >= LPC_PIN_COUNT || p_intID >= LPC_INTERRUPT_COUNT || p_mode > 4) return SFP_ERR_ARG_VALUE;
 
 	NVIC_DisableIRQ(p_intID);	// Disable interrupt. XXX: Luckily FLEX_INTx_IRQn == x, so it can be used this way, otherwise BE AWARE!
 
@@ -293,7 +348,11 @@ SFPResult lpc_detachInterrupt(SFPFunction *msg) {
 	return SFP_OK;
 }
 
-inline void GPIO_EnableInterrupt(uint8_t intID) {
+void GPIO_EnableInterruptCallback(void* ptr) {
+	GPIO_EnableInterrupt((uint8_t)(uint32_t)ptr);
+}
+
+void GPIO_EnableInterrupt(uint8_t intID) {
 	LPC_GPIO_PIN_INT->RISE = (1<<intID);	// Clear rising edge (sort of) flag
 	LPC_GPIO_PIN_INT->FALL = (1<<intID);	// Clear falling edge (sort of) flag
 	NVIC_EnableIRQ(intID);	// Enable ISR
@@ -313,7 +372,6 @@ static inline void GPIO_SEND_INT(uint8_t intID, uint8_t intEvt) {
 }
 
 static void GPIO_InterruptHandler(uint8_t intID) {
-	timer_interrupts[intID] = TIMER_STOP;
 	NVIC_DisableIRQ(intID);		// Disable ISR
 
 	uint8_t intBit = (1 << intID);
@@ -343,7 +401,7 @@ static void GPIO_InterruptHandler(uint8_t intID) {
 
 		GPIO_SEND_INT(intID, interruptEvent);
 
-		timer_interrupts[intID] = 50; // 50ms delay
+		Time_addTimer(50, GPIO_EnableInterruptCallback, (void*)(uint32_t)intID);
 		return;
 	}
 

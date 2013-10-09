@@ -1,5 +1,5 @@
 /**
- * @file	LPC_GPIO.h
+ * @file	time.h
  * @author  Giedrius Medzevicius <giedrius@8devices.com>
  *
  * @section LICENSE
@@ -30,42 +30,28 @@
  *
  */
 
-#ifndef LPC_GPIO_H_
-#define LPC_GPIO_H_
+#ifndef TIME_H_
+#define TIME_H_
 
 #include "main.h"
 
-#define LPC_PIN_COUNT	34
-#define LPC_INTERRUPT_COUNT 8
+#define TIMER_STOP	0xFFFFFFFF
+#define TIMER_COUNT	16
 
-inline void GPIO_EnableInterrupt(uint8_t intID);
+typedef uint32_t	time_t;
+typedef uint32_t	time_us_t;
+typedef void (*TimerCallback)(void*);
 
-void FLEX_INT0_IRQHandler(void);
-void FLEX_INT1_IRQHandler(void);
-void FLEX_INT2_IRQHandler(void);
-void FLEX_INT3_IRQHandler(void);
-void FLEX_INT4_IRQHandler(void);
-void FLEX_INT5_IRQHandler(void);
-void FLEX_INT6_IRQHandler(void);
-void FLEX_INT7_IRQHandler(void);
+void Time_init(void);
 
-void lpc_config_gpioInit(void);
+time_t Time_getSystemTime(void);
+time_us_t Time_getSystemTime_us(void);
 
-SFPResult lpc_config_setPrimary(SFPFunction *msg);
+void Time_addTimer(uint32_t timeout, TimerCallback callback, void *param);
 
-SFPResult lpc_config_setSecondary(SFPFunction *msg);
+void Time_delay(uint32_t time); // Delay a number of milliseconds
 
-SFPResult lpc_pinMode(SFPFunction *msg);
+void Time_setCountdown(uint32_t time);
+uint8_t Time_isCountdownRunning(void);
 
-SFPResult lpc_digitalWrite(SFPFunction *msg);
-
-SFPResult lpc_digitalRead(SFPFunction *msg);
-
-SFPResult lpc_attachInterrupt(SFPFunction *msg);
-
-SFPResult lpc_detachInterrupt(SFPFunction *msg);
-
-SFPResult lpc_pulseIn(SFPFunction *msg);
-
-
-#endif /* LPC_GPIO_H_ */
+#endif /* TIME_H_ */
