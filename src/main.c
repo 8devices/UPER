@@ -178,6 +178,8 @@ int main(void) {
 	/* SFP initialization, configuration and launch */
 	SFPServer *server = SFPServer_new(&stream);
 
+	SFPServer_setDataTimeout(server, 30000); // 300k is about a second (30k ~100ms)
+
 	/* Test functions (temporary) */
 	SFPServer_addFunctionHandler(server, "led", 0, LedCallback);
 
