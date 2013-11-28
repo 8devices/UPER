@@ -99,22 +99,22 @@ SFPResult lpc_pwm1_begin(SFPFunction *msg) {
 
 	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
 
-	uint32_t p_cyclePeriod = SFPFunction_getArgument_int32(msg, 0);	// 32 bit value in microseconds
+	uint32_t p_cyclePeriod = SFPFunction_getArgument_int32(msg, 0)-1;	// 32 bit value in microseconds
 
 	LPC_SYSCON->SYSAHBCLKCTRL |= BIT9;	// enable clock for CT32B0
 
 	// MAT3 is configured as the driving clock for PWM
 	LPC_CT32B0->TCR = BIT0 | BIT1;	// Enable timer, but keep in reset state
-	LPC_CT32B0->PR = 48;	// 48MHz/48 = 1MHz (1us)
+	LPC_CT32B0->PR = 48-1;	// 48MHz/48 = 1MHz (1us)
 
 	LPC_CT32B0->MCR = BIT10; // Reset timer on MR3
 	LPC_CT32B0->MR3 = p_cyclePeriod;	// Set PWM cycle period
-	//LPC_CT32B0->MR2 = p_cyclePeriod; // Set full low time for PWM2
-	//LPC_CT32B0->MR1 = p_cyclePeriod; // Set full low time for PWM1
-	//LPC_CT32B0->MR0 = p_cyclePeriod; // Set full low time for PWM0
+	LPC_CT32B0->MR2 = 0; // Set no low time for PWM2
+	LPC_CT32B0->MR1 = 0; // Set no low time for PWM1
+	LPC_CT32B0->MR0 = 0; // Set no low time for PWM0
 
-	LPC_CT32B0->EMR = 0;	// All external outputs disabled
-	LPC_CT32B0->PWMC = 0;	// All PWM channels disabled
+	LPC_CT32B0->EMR = 0x02A0; // External outputs enabled: channels 0-2 set high on match
+	LPC_CT32B0->PWMC = 0x7;   // PWM channels enabled: set channels 0-2 to PWM control
 
 	LPC_CT32B0->TCR &= ~BIT1;	// disable reset
 
@@ -134,9 +134,10 @@ SFPResult lpc_pwm1_set(SFPFunction *msg) {
 
 	if (p_channelID > 2) return SFP_ERR_ARG_VALUE;
 
-	LPC_CT32B0->MR[p_channelID] = (LPC_CT32B0->MR3 & 0xFFFF) - p_highTime;	// Set PWM low time
-	LPC_CT32B0->EMR |= ((1 << p_channelID) | (0x2 << (p_channelID+p_channelID+4))); // Connect channel output to pin and set pin high on match
-	LPC_CT32B0->PWMC |= (1 << p_channelID);	// Enable PWM mode for the channel
+	if (LPC_CT32B0->MR3 < p_highTime)
+		LPC_CT32B0->MR[p_channelID] = 0;	// Set full high time (0 low time)
+	else
+		LPC_CT32B0->MR[p_channelID] = LPC_CT32B0->MR3 + 1 - p_highTime;	// Set PWM low time
 
 	return SFP_OK;
 }
