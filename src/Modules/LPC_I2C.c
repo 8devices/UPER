@@ -34,7 +34,7 @@
 #include "Modules/LPC_I2C.h"
 
 
-struct {
+volatile struct {
 	enum {
 		I2C_IDLE=0,
 		I2C_START, 	// First start bit sent
