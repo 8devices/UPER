@@ -135,7 +135,7 @@ void I2C_IRQHandler(void) {
 			}
 			break;
 		}
-		case 0x10: {	// Repeated START XXX: clear START bit??
+		case 0x10: {	// Repeated START
 			LPC_I2C->CONCLR = BIT5;//clear start;
 			if (I2CHandler.status == I2C_RESTART) {
 				I2CHandler.status = I2C_SLAR;
