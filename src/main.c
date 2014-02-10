@@ -120,6 +120,16 @@ SFPResult lpc_system_getDeviceInfo(SFPFunction *msg) {
 	return SFP_OK;
 }
 
+SFPResult lpc_system_restart(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 0) return SFP_ERR_ARG_COUNT;
+
+	Time_delay(1000); // Delay 1s before restarting
+	NVIC_SystemReset();
+
+	return SFP_OK; // This code should not be reached
+}
+
+
 SFPResult LedCallback(SFPFunction *msg) {
 	LPC_GPIO->NOT[0] |= BIT7;
 
@@ -226,6 +236,7 @@ int main(void) {
 	/* Other functions */
 	SFPServer_addFunctionHandler(server, UPER_FNAME_REGISTERWRITE, UPER_FID_REGISTERWRITE, lpc_system_registerWrite);
 	SFPServer_addFunctionHandler(server, UPER_FNAME_REGISTERREAD,  UPER_FID_REGISTERREAD, lpc_system_registerRead);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_RESTART,       UPER_FID_RESTART, lpc_system_restart);
 	SFPServer_addFunctionHandler(server, UPER_FNAME_GETDEVICEINFO,  UPER_FID_GETDEVICEINFO, lpc_system_getDeviceInfo);
 
 

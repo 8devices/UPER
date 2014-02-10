@@ -73,6 +73,8 @@
 #define UPER_FID_REGISTERWRITE		100
 #define UPER_FID_REGISTERREAD		101
 
+#define UPER_FID_RESTART			251
+
 #define UPER_FID_GETDEVICEINFO		255
 
 /*
@@ -113,6 +115,8 @@
 
 #define UPER_FNAME_REGISTERWRITE	"registerWrite"
 #define UPER_FNAME_REGISTERREAD		"registerRead"
+
+#define UPER_FNAME_RESTART			"restart"
 
 #define UPER_FNAME_GETDEVICEINFO	"GetDeviceInfo"
 
