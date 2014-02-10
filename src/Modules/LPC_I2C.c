@@ -247,7 +247,7 @@ SFPResult lpc_i2c_trans(SFPFunction *msg) {
 	/* Initialize I2C Transfer parameters */
 	I2CHandler.error = 0;
 	I2CHandler.slaveAddress = SFPFunction_getArgument_int32(msg, 0) & 0x7F;
-	I2CHandler.writePtr = SFPFunction_getArgument_barray(msg, 1, &I2CHandler.writeSize);
+	I2CHandler.writePtr = SFPFunction_getArgument_barray(msg, 1, (uint32_t*)&I2CHandler.writeSize);
 	I2CHandler.readSize = SFPFunction_getArgument_int32(msg, 2);
 	I2CHandler.readCount = 0;
 
