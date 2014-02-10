@@ -129,36 +129,6 @@ SFPResult lpc_system_restart(SFPFunction *msg) {
 	return SFP_OK; // This code should not be reached
 }
 
-
-SFPResult LedCallback(SFPFunction *msg) {
-	LPC_GPIO->NOT[0] |= BIT7;
-
-	SFPFunction *outFunc = SFPFunction_new();
-	if (outFunc != NULL) {
-		SFPFunction_setType(outFunc, SFPFunction_getType(msg));
-		SFPFunction_setID(outFunc, 0xE1);
-		SFPFunction_setName(outFunc, "testukas");
-		SFPFunction_addArgument_int32(outFunc, (int32_t)outFunc);
-
-		uint32_t i;
-		for (i=0; i<SFPFunction_getArgumentCount(msg); i++) {
-			SFPArgumentType t = SFPFunction_getArgumentType(msg, i);
-			if (t == SFP_ARG_INT) {
-				SFPFunction_addArgument_int32(outFunc, SFPFunction_getArgument_int32(msg, i));
-			} else if (t == SFP_ARG_BYTE_ARRAY) {
-				uint32_t len = 0;
-				uint8_t *data = SFPFunction_getArgument_barray(msg, i, &len);
-				SFPFunction_addArgument_barray(outFunc, data, len);
-			}
-		}
-
-		SFPFunction_send(outFunc, &stream);
-		SFPFunction_delete(outFunc);
-	}
-
-	return SFP_OK;
-}
-
 int main(void) {
 	SystemCoreClockUpdate();
 
@@ -179,19 +149,10 @@ int main(void) {
 	LPC_IOCON->PIO0_4 |= 1;	// I2C SCL
 	LPC_IOCON->PIO0_5 |= 1;	// I2C SDA
 
-	/* Temporary and test configs */
-	// XXX: LED config - leave it for now
-	LPC_GPIO->DIR[0] |= BIT7;
-	LPC_GPIO->CLR[0] |= BIT7;
-
-
 	/* SFP initialization, configuration and launch */
 	SFPServer *server = SFPServer_new(&stream);
 
 	SFPServer_setDataTimeout(server, 30000); // 300k is about a second (30k ~100ms)
-
-	/* Test functions (temporary) */
-	SFPServer_addFunctionHandler(server, "led", 0, LedCallback);
 
 	/* GPIO/Pin functions */
 	SFPServer_addFunctionHandler(server, UPER_FNAME_SETPRIMARY,	 UPER_FID_SETPRIMARY,	lpc_config_setPrimary);
