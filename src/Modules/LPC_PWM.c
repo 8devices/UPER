@@ -48,9 +48,9 @@ SFPResult lpc_pwm0_begin(SFPFunction *msg) {
 
 	LPC_CT16B0->MCR = BIT10; // Reset timer on MR3
 	LPC_CT16B0->MR3 = p_cyclePeriod; // Set PWM cycle period
-	LPC_CT16B0->MR2 = 0; // Set no low time for PWM2
-	LPC_CT16B0->MR1 = 0; // Set no low time for PWM1
-	LPC_CT16B0->MR0 = 0; // Set no low time for PWM0
+	LPC_CT16B0->MR2 = p_cyclePeriod+1; // Set 0% duty cycle (100% off time)
+	LPC_CT16B0->MR1 = p_cyclePeriod+1; // Set 0% duty cycle
+	LPC_CT16B0->MR0 = p_cyclePeriod+1; // Set 0% duty cycle
 
 	LPC_CT16B0->EMR = 0x02A0; // External outputs enabled: channels 0-2 set high on match
 	LPC_CT16B0->PWMC = 0x7;   // PWM channels enabled: set channels 0-2 to PWM control
@@ -85,6 +85,9 @@ SFPResult lpc_pwm0_end(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
 		return SFP_ERR_ARG_COUNT;
 
+	LPC_CT16B0->EMR = 0; 	// Disable external outputs
+	LPC_CT16B0->PWMC = 0;   // Disable PWM channels
+
 	LPC_CT16B0->TCR = 0;	// Disable timer
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT7;	// Disable clock for CT16B0
 
@@ -109,9 +112,9 @@ SFPResult lpc_pwm1_begin(SFPFunction *msg) {
 
 	LPC_CT32B0->MCR = BIT10; // Reset timer on MR3
 	LPC_CT32B0->MR3 = p_cyclePeriod;	// Set PWM cycle period
-	LPC_CT32B0->MR2 = 0; // Set no low time for PWM2
-	LPC_CT32B0->MR1 = 0; // Set no low time for PWM1
-	LPC_CT32B0->MR0 = 0; // Set no low time for PWM0
+	LPC_CT32B0->MR2 = p_cyclePeriod+1; // Set 0% duty cycle
+	LPC_CT32B0->MR1 = p_cyclePeriod+1; // Set 0% duty cycle
+	LPC_CT32B0->MR0 = p_cyclePeriod+1; // Set 0% duty cycle
 
 	LPC_CT32B0->EMR = 0x02A0; // External outputs enabled: channels 0-2 set high on match
 	LPC_CT32B0->PWMC = 0x7;   // PWM channels enabled: set channels 0-2 to PWM control
@@ -145,6 +148,9 @@ SFPResult lpc_pwm1_set(SFPFunction *msg) {
 SFPResult lpc_pwm1_end(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0)
 		return SFP_ERR_ARG_COUNT;
+
+	LPC_CT32B0->EMR = 0; 	// Disable external outputs
+	LPC_CT32B0->PWMC = 0;   // Disable PWM channels
 
 	LPC_CT32B0->TCR = 0;	// Disable timer
 	LPC_SYSCON->SYSAHBCLKCTRL &= ~BIT9;	// Disable clock for CT16B0
