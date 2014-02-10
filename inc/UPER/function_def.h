@@ -70,9 +70,6 @@
 #define UPER_FID_PWM1SET			61
 #define UPER_FID_PWM1END			62
 
-#define UPER_FID_REGISTERWRITE		100
-#define UPER_FID_REGISTERREAD		101
-
 #define UPER_FID_RESTART			251
 
 #define UPER_FID_GETDEVICEINFO		255
@@ -112,9 +109,6 @@
 #define UPER_FNAME_PWM1BEGIN		"pwm1_begin"
 #define UPER_FNAME_PWM1SET			"pwm1_set"
 #define UPER_FNAME_PWM1END			"pwm1_end"
-
-#define UPER_FNAME_REGISTERWRITE	"registerWrite"
-#define UPER_FNAME_REGISTERREAD		"registerRead"
 
 #define UPER_FNAME_RESTART			"restart"
 

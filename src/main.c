@@ -42,64 +42,6 @@
 
 #include "IAP.h"
 
-inline uint8_t isValidRegisterAddress(uint32_t addr) {
-
-	if (addr >= 0x40000000 && addr < 0x40020000) return 1;	// I2C, WWDT, USART, timers, ADC
-
-	if (addr >= 0x40038000 && addr < 0x40050000) return 1;	// PMU, flash/EEPROM, SSP0, IOCON, system control, GPIO interrupts
-
-	if (addr >= 0x40058000 && addr < 0x40064000) return 1;	// SSP1, GPIO Group interrupts
-
-	if (addr >= 0x40080000 && addr < 0x40084000) return 1;	// USB
-
-	if (addr >= 0x50000000 && addr < 0x50004000) return 1;	// GPIO
-
-	return 0;
-}
-
-SFPResult lpc_system_registerWrite(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 2) return SFP_ERR_ARG_COUNT;
-
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT
-			|| SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
-		return SFP_ERR_ARG_TYPE;
-
-	uint32_t p_addr = SFPFunction_getArgument_int32(msg, 0);
-	uint32_t p_value = SFPFunction_getArgument_int32(msg, 1);
-
-	if (!isValidRegisterAddress(p_addr)) return SFP_ERR_ARG_VALUE;
-
-	*((volatile uint32_t *)p_addr) = p_value;
-
-	return SFP_OK;
-}
-
-SFPResult lpc_system_registerRead(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 1) return SFP_ERR_ARG_COUNT;
-
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
-
-	uint32_t p_addr = SFPFunction_getArgument_int32(msg, 0);
-
-	if (!isValidRegisterAddress(p_addr)) return SFP_ERR_ARG_VALUE;
-
-	uint32_t value = *((volatile uint32_t *)p_addr);
-
-	SFPFunction *func = SFPFunction_new();
-
-	if (func == NULL) return SFP_ERR_ALLOC_FAILED;
-
-	SFPFunction_setType(func, SFPFunction_getType(msg));
-	SFPFunction_setID(func, UPER_FID_REGISTERREAD);
-	SFPFunction_setName(func, UPER_FNAME_REGISTERREAD);
-	SFPFunction_addArgument_int32(func, p_addr);
-	SFPFunction_addArgument_int32(func, value);
-	SFPFunction_send(func, &stream);
-	SFPFunction_delete(func);
-
-	return SFP_OK;
-}
-
 SFPResult lpc_system_getDeviceInfo(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 0) return SFP_ERR_ARG_COUNT;
 
@@ -195,8 +137,6 @@ int main(void) {
 
 
 	/* Other functions */
-	SFPServer_addFunctionHandler(server, UPER_FNAME_REGISTERWRITE, UPER_FID_REGISTERWRITE, lpc_system_registerWrite);
-	SFPServer_addFunctionHandler(server, UPER_FNAME_REGISTERREAD,  UPER_FID_REGISTERREAD, lpc_system_registerRead);
 	SFPServer_addFunctionHandler(server, UPER_FNAME_RESTART,       UPER_FID_RESTART, lpc_system_restart);
 	SFPServer_addFunctionHandler(server, UPER_FNAME_GETDEVICEINFO,  UPER_FID_GETDEVICEINFO, lpc_system_getDeviceInfo);
 
