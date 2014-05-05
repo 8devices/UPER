@@ -251,14 +251,14 @@ SFPResult lpc_i2c_trans(SFPFunction *msg) {
 	I2CHandler.readSize = SFPFunction_getArgument_int32(msg, 2);
 	I2CHandler.readCount = 0;
 
-	if (I2CHandler.writeSize == 0 && I2CHandler.readSize == 0) return SFP_ERR_ARG_VALUE;
+	//if (I2CHandler.writeSize == 0 && I2CHandler.readSize == 0) return SFP_ERR_ARG_VALUE;
 
 	uint8_t *bundleBuf = NULL;
-	if (I2CHandler.readSize != 0) {
+	//if (I2CHandler.readSize != 0) {
 		bundleBuf = (uint8_t*)MemoryManager_malloc(I2CHandler.readSize);
 		if (bundleBuf == NULL)
 			return SFP_ERR_ALLOC_FAILED;
-	}
+	//}
 	I2CHandler.readPtr = bundleBuf;
 
 	/* Start I2C Transfer */
