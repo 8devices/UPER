@@ -54,5 +54,7 @@
 SFPStream stream;
 
 uint32_t GUID[4];
+uint32_t UPER_PART_NUMBER;
+uint32_t UPER_BOOT_CODE_VERSION;
 
 #endif /* MAIN_H_ */

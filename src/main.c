@@ -54,8 +54,8 @@ SFPResult lpc_system_getDeviceInfo(SFPFunction *msg) {
 	SFPFunction_setName(func, UPER_FNAME_GETDEVICEINFO);
 	SFPFunction_addArgument_int32(func, UPER_FIRMWARE_VERSION);
 	SFPFunction_addArgument_barray(func, (uint8_t*)&GUID[0], 16);
-	SFPFunction_addArgument_int32(func, IAP_GetPartNumber());
-	SFPFunction_addArgument_int32(func, IAP_GetBootCodeVersion());
+	SFPFunction_addArgument_int32(func, UPER_PART_NUMBER);
+	SFPFunction_addArgument_int32(func, UPER_BOOT_CODE_VERSION);
 	SFPFunction_send(func, &stream);
 	SFPFunction_delete(func);
 
@@ -74,9 +74,13 @@ SFPResult lpc_system_restart(SFPFunction *msg) {
 int main(void) {
 	SystemCoreClockUpdate();
 
-	Time_init();
-
+	// Read IAP before any interrupts are enabled
+	UPER_PART_NUMBER		= IAP_GetPartNumber();
+	UPER_BOOT_CODE_VERSION	= IAP_GetBootCodeVersion();
 	IAP_GetSerialNumber(GUID);
+
+	// Init the rest of the system
+	Time_init();
 
 	while (CDC_Init(&stream, GUID) != LPC_OK); // Load SFPPacketStream
 
