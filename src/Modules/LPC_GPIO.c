@@ -76,6 +76,7 @@ uint8_t const LPC_PIN_SECONDARY_FUNCTION[] = {
 };
 
 static volatile SFPFunctionType LPC_INTERRUPT_FUNCTION_TYPE[LPC_INTERRUPT_COUNT];
+static uint32_t LPC_INTERRUPT_DOWNTIME[LPC_INTERRUPT_COUNT];
 
 void lpc_config_gpioInit() {
 	uint8_t pin;
@@ -269,17 +270,19 @@ SFPResult lpc_pulseIn(SFPFunction *msg) {
 }
 
 SFPResult lpc_attachInterrupt(SFPFunction *func) {
-	if (SFPFunction_getArgumentCount(func) != 3)
+	if (SFPFunction_getArgumentCount(func) != 4)
 		return SFP_ERR_ARG_COUNT;
 
 	if (SFPFunction_getArgumentType(func, 0) != SFP_ARG_INT
 			|| SFPFunction_getArgumentType(func, 1) != SFP_ARG_INT
-			|| SFPFunction_getArgumentType(func, 2) != SFP_ARG_INT)
+			|| SFPFunction_getArgumentType(func, 2) != SFP_ARG_INT
+			|| SFPFunction_getArgumentType(func, 3) != SFP_ARG_INT)
 		return SFP_ERR_ARG_TYPE;
 
 	uint8_t p_intID = SFPFunction_getArgument_int32(func, 0);	// interrupt ID
 	uint8_t p_pin = SFPFunction_getArgument_int32(func, 1);	// pin ID
 	uint8_t p_mode = SFPFunction_getArgument_int32(func, 2);	// interrupt mode
+	uint32_t p_downtime = SFPFunction_getArgument_int32(func, 3); // down time
 
 	if (p_pin >= LPC_PIN_COUNT || p_intID >= LPC_INTERRUPT_COUNT || p_mode > 4) return SFP_ERR_ARG_VALUE;
 
@@ -322,6 +325,7 @@ SFPResult lpc_attachInterrupt(SFPFunction *func) {
 	}
 
 	LPC_INTERRUPT_FUNCTION_TYPE[p_intID] = SFPFunction_getType(func);
+	LPC_INTERRUPT_DOWNTIME[p_intID] = p_downtime;
 
 	LPC_GPIO_PIN_INT->RISE = (1 << p_intID);	// Clear rising edge (sort of) flag
 	LPC_GPIO_PIN_INT->FALL = (1 << p_intID);	// Clear falling edge (sort of) flag
@@ -401,7 +405,7 @@ static void GPIO_InterruptHandler(uint8_t intID) {
 
 		GPIO_SEND_INT(intID, interruptEvent);
 
-		Time_addTimer(50, GPIO_EnableInterruptCallback, (void*)(uint32_t)intID);
+		Time_addTimer(LPC_INTERRUPT_DOWNTIME[intID], GPIO_EnableInterruptCallback, (void*)(uint32_t)intID);
 		return;
 	}
 
