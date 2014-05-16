@@ -32,6 +32,9 @@
 
 #include "time.h"
 
+#define TIMER_STOP	0
+#define TIMER_COUNT	16
+
 volatile time_t 	time_systime;
 volatile time_us_t 	time_systime_us;
 
@@ -58,7 +61,7 @@ void SysTick_Handler(void) {
 	uint8_t i;
 	for (i=0; i<TIMER_COUNT; i++) {
 		if (time_timers[i].timeout != TIMER_STOP) {
-			if (--time_timers[i].timeout == 0) {
+			if (--time_timers[i].timeout == TIMER_STOP) {
 				time_timers[i].callback(time_timers[i].callbackParam);
 			}
 		}
@@ -88,12 +91,17 @@ time_us_t Time_getSystemTime_us(void) {
 }
 
 void Time_addTimer(uint32_t timeout, TimerCallback callback, void *param) {
+	if (timeout == TIMER_STOP) {
+		callback(param);
+		return;
+	}
+
 	uint8_t i;
 	for (i=0; i<TIMER_COUNT; i++) {
 		if (time_timers[i].timeout == TIMER_STOP) {
-			time_timers[i].timeout = timeout;
 			time_timers[i].callback = callback;
 			time_timers[i].callbackParam = param;
+			time_timers[i].timeout = timeout;
 			return;
 		}
 	}

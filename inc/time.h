@@ -35,9 +35,6 @@
 
 #include "main.h"
 
-#define TIMER_STOP	0xFFFFFFFF
-#define TIMER_COUNT	16
-
 typedef uint32_t	time_t;
 typedef uint32_t	time_us_t;
 typedef void (*TimerCallback)(void*);

@@ -362,14 +362,14 @@ void GPIO_EnableInterrupt(uint8_t intID) {
 	NVIC_EnableIRQ(intID);	// Enable ISR
 }
 
-static inline void GPIO_SEND_INT(uint8_t intID, uint8_t intEvt) {
+static inline void GPIO_SEND_INT(uint8_t intID, uint32_t intStatus) {
 	SFPFunction *func = SFPFunction_new();
 	if (func != NULL) {
 		SFPFunction_setType(func, LPC_INTERRUPT_FUNCTION_TYPE[intID]);
 		SFPFunction_setID(func, UPER_FID_INTERRUPT);
 		SFPFunction_setName(func, UPER_FNAME_INTERRUPT);
 		SFPFunction_addArgument_int32(func, intID);
-		SFPFunction_addArgument_int32(func, intEvt);
+		SFPFunction_addArgument_int32(func, intStatus);
 		SFPFunction_send(func, &stream);
 		SFPFunction_delete(func);
 	}
@@ -381,6 +381,22 @@ static void GPIO_InterruptHandler(uint8_t intID) {
 	uint8_t intBit = (1 << intID);
 
 	if (LPC_GPIO_PIN_INT->IST & intBit) {
+
+		uint32_t interruptValues = 0;
+		uint8_t i;
+		for (i=0; i<LPC_INTERRUPT_COUNT; i++) {
+			uint8_t port = 0;
+			uint8_t pinNum = LPC_SYSCON->PINTSEL[i];
+			if (pinNum > 23) {
+				port = 1;
+				pinNum -= 24;
+			}
+
+			if (LPC_GPIO->PIN[port] & (1 << pinNum))
+				interruptValues |= (1 << i);
+		}
+
+
 		uint8_t interruptEvent = 0xFF;
 
 		if ((LPC_GPIO_PIN_INT->ISEL & intBit)) {	// if LEVEL mode
@@ -403,7 +419,7 @@ static void GPIO_InterruptHandler(uint8_t intID) {
 			}
 		}
 
-		GPIO_SEND_INT(intID, interruptEvent);
+		GPIO_SEND_INT(intID, (interruptValues << 8) | interruptEvent);
 
 		Time_addTimer(LPC_INTERRUPT_DOWNTIME[intID], GPIO_EnableInterruptCallback, (void*)(uint32_t)intID);
 		return;
