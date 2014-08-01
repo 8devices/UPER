@@ -278,11 +278,11 @@ SFPResult lpc_i2c_trans(SFPFunction *msg) {
 	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
 	SFPFunction_setID(outFunc, UPER_FID_I2CTRANS);
 	SFPFunction_setName(outFunc, UPER_FNAME_I2CTRANS);
-	if (I2CHandler.error) {
-		SFPFunction_addArgument_int32(outFunc, I2CHandler.error);
-	} else {
-		SFPFunction_addArgument_barray(outFunc, bundleBuf, I2CHandler.readCount);
-	}
+
+	SFPFunction_addArgument_int32(outFunc, I2CHandler.slaveAddress);
+	SFPFunction_addArgument_barray(outFunc, bundleBuf, I2CHandler.readCount);
+	SFPFunction_addArgument_int32(outFunc, I2CHandler.error);
+
 	SFPFunction_send(outFunc, &stream);
 	SFPFunction_delete(outFunc);
 
