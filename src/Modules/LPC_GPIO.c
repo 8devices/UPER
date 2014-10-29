@@ -49,7 +49,7 @@ volatile uint32_t * const LPC_PIN_REGISTERS[] = {
 		&LPC_IOCON->PIO0_18,	&LPC_IOCON->PIO0_17,	&LPC_IOCON->PIO1_15, 	&LPC_IOCON->PIO0_23, 		// 24
 		&LPC_IOCON->PIO0_22,	&LPC_IOCON->PIO0_16,	&LPC_IOCON->SWDIO_PIO0_15,&LPC_IOCON->PIO1_22,
 		&LPC_IOCON->PIO1_14, 	&LPC_IOCON->PIO1_13, 	&LPC_IOCON->TRST_PIO0_14,&LPC_IOCON->TDO_PIO0_13,	// 32
-		&LPC_IOCON->TMS_PIO0_12,&LPC_IOCON->TDI_PIO0_11,	// 34
+		&LPC_IOCON->TMS_PIO0_12,&LPC_IOCON->TDI_PIO0_11,// 34
 };
 
 #define LPC_PIN_FUNCTION_MASK	(BIT7 | 7)		// FUNC bits + AD bit
@@ -72,7 +72,14 @@ uint8_t const LPC_PIN_SECONDARY_FUNCTION[] = {
 		0x81 /* UART RX */,	0x80 /* GPIO */,		0x82 /* PWM16_2 */,		0x01 /* ADC7 */,	// 24
 		0x01 /* ADC6 */,	0x01 /* ADC5 */,		0x02 /* ADC4 */,		0x80 /* GPIO */,
 		0x82 /* PWM16_1 */,	0x82 /* PWM16_0 */,		0x02 /* ADC3 */,		0x02 /* ADC2 */,	// 32
-		0x02 /* ADC1 */,	0x02 /* ADC0 */,	// 34
+		0x02 /* ADC1 */,	0x02 /* ADC0 */,// 34
+};
+
+uint8_t const LPC_PORT_MAPPING[4][8] = {
+		{20, 19, 13, 12, 14, 1,  8,  21}, // PORT 0
+		{5,  11, 4,  0, 18, 16, 27, 6},  // PORT 1
+		{3,  9,  29, 28, 22, 7,  17, 2},  // PORT 2
+		{33, 32, 31, 30, 26, 25, 24, 23}  // PORT 3
 };
 
 static volatile SFPFunctionType LPC_INTERRUPT_FUNCTION_TYPE[LPC_INTERRUPT_COUNT];
@@ -205,6 +212,121 @@ SFPResult lpc_digitalRead(SFPFunction *msg) {
 	SFPFunction_setName(outFunc, UPER_FNAME_DIGITALREAD);
 	SFPFunction_addArgument_int32(outFunc, pin);
 	SFPFunction_addArgument_int32(outFunc, val);
+	SFPFunction_send(outFunc, &stream);
+	SFPFunction_delete(outFunc);
+
+	return SFP_OK;
+}
+
+SFPResult lpc_portMode(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 2) return SFP_ERR_ARG_COUNT;
+
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
+
+	uint8_t port = SFPFunction_getArgument_int32(msg, 0);
+	uint8_t mode = SFPFunction_getArgument_int32(msg, 1);
+
+	if (port >= LPC_PORT_COUNT) return SFP_ERR_ARG_VALUE;
+	if (mode > 4 || mode == 3) return SFP_ERR_ARG_VALUE;
+
+	uint8_t i = 0;
+	uint8_t lpc_port = 0;
+	uint8_t pin = 0;
+	for (i = 0; i < 8; i++) {
+		lpc_port = 0;
+		pin = LPC_PORT_MAPPING[port][i];
+		uint8_t pinNum = LPC_PIN_IDS[pin];
+		if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
+			lpc_port = 1;
+			pinNum -= 24;
+		}
+
+		*LPC_PIN_REGISTERS[pin] &= ~LPC_PIN_MODE_MASK;	// Remove pull-up/down resistors
+
+		if (mode == 1) {
+			LPC_GPIO->DIR[lpc_port] |= (1 << pinNum);	// Set direction bit (output)
+		} else {
+			*LPC_PIN_REGISTERS[pin] |= (mode << 2) & LPC_PIN_MODE_MASK;// Setup resistors
+			LPC_GPIO->DIR[lpc_port] &= ~(1 << pinNum);	// Clear direction bit (input)
+		}
+	}
+	return SFP_OK;
+}
+
+SFPResult lpc_portWrite(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 2)
+		return SFP_ERR_ARG_COUNT;
+
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
+
+	uint8_t port = SFPFunction_getArgument_int32(msg, 0);
+	uint8_t value = SFPFunction_getArgument_int32(msg, 1);
+
+	if (port >= LPC_PORT_COUNT) return SFP_ERR_ARG_VALUE;
+
+	uint8_t lpc_port = 0;
+	uint8_t i;
+	/* NOTE : The port mapping of WeIO doesn't reflect the real port of LPC.
+	 * The portWrite doesn't set the whole port in the same time, but pin per pin.
+	 */
+	for (i = 0; i < 8; i++) {
+		lpc_port = 0;
+		// Get the current pin
+		uint8_t pinNum = LPC_PIN_IDS[LPC_PORT_MAPPING[port][i]];
+		if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
+			lpc_port = 1;
+			pinNum -= 24;
+		}
+
+		// Output the value
+		if (((value >> i) & 0x01) == 0) {
+			LPC_GPIO->CLR[lpc_port] = (1 << pinNum);
+		} else {
+			LPC_GPIO->SET[lpc_port] = (1 << pinNum);
+		}
+	}
+	return SFP_OK;
+}
+
+SFPResult lpc_portRead(SFPFunction *msg) {
+	if (SFPFunction_getArgumentCount(msg) != 1)
+		return SFP_ERR_ARG_COUNT;
+
+	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT)
+		return SFP_ERR_ARG_TYPE;
+
+	uint8_t port = SFPFunction_getArgument_int32(msg, 0);
+
+	if (port >= LPC_PORT_COUNT)
+		return SFP_ERR_ARG_VALUE;
+
+	uint8_t lpc_port = 0;
+	uint8_t i;
+	uint8_t port_val = 0;
+
+	for (i = 0; i < 8; i++) {
+		lpc_port = 0;
+		// Get the current pin
+		uint8_t pinNum = LPC_PIN_IDS[LPC_PORT_MAPPING[port][i]];
+		if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
+			lpc_port = 1;
+			pinNum -= 24;
+		}
+		if (LPC_GPIO->PIN[lpc_port] & (1 << pinNum))
+			port_val |= (1 << i);
+	}
+
+	SFPFunction *outFunc = SFPFunction_new();
+
+	if (outFunc == NULL) return SFP_ERR_ALLOC_FAILED;
+
+	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
+	SFPFunction_setID(outFunc, UPER_FID_PORTREAD);
+	SFPFunction_setName(outFunc, UPER_FNAME_PORTREAD);
+	SFPFunction_addArgument_int32(outFunc, port);
+	SFPFunction_addArgument_int32(outFunc, port_val);
 	SFPFunction_send(outFunc, &stream);
 	SFPFunction_delete(outFunc);
 

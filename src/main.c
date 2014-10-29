@@ -113,6 +113,10 @@ int main(void) {
 
 	SFPServer_addFunctionHandler(server, UPER_FNAME_PULSEIN, UPER_FID_PULSEIN, lpc_pulseIn);
 
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PORTMODE, UPER_FID_PORTMODE, lpc_portMode);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PORTWRITE, UPER_FID_PORTWRITE, lpc_portWrite);
+	SFPServer_addFunctionHandler(server, UPER_FNAME_PORTREAD, UPER_FID_PORTREAD, lpc_portRead);
+
 	/* ADC functions */
 	SFPServer_addFunctionHandler(server, UPER_FNAME_ANALOGREAD, UPER_FID_ANALOGREAD, lpc_analogRead);
 

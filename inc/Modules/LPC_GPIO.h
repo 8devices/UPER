@@ -37,6 +37,7 @@
 
 #define LPC_PIN_COUNT	34
 #define LPC_INTERRUPT_COUNT 8
+#define LPC_PORT_COUNT	4
 
 inline void GPIO_EnableInterrupt(uint8_t intID);
 
@@ -60,6 +61,12 @@ SFPResult lpc_pinMode(SFPFunction *msg);
 SFPResult lpc_digitalWrite(SFPFunction *msg);
 
 SFPResult lpc_digitalRead(SFPFunction *msg);
+
+SFPResult lpc_portMode(SFPFunction *msg);
+
+SFPResult lpc_portWrite(SFPFunction *msg);
+
+SFPResult lpc_portRead(SFPFunction *msg);
 
 SFPResult lpc_attachInterrupt(SFPFunction *msg);
 
