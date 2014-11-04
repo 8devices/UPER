@@ -74,5 +74,7 @@ SFPResult lpc_detachInterrupt(SFPFunction *msg);
 
 SFPResult lpc_pulseIn(SFPFunction *msg);
 
+SFPResult lpc_dhtxxRead(SFPFunction *msg);
+
 
 #endif /* LPC_GPIO_H_ */

@@ -143,6 +143,8 @@ int main(void) {
 	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM1SET,   UPER_FID_PWM1SET, lpc_pwm1_set);
 	SFPServer_addFunctionHandler(server, UPER_FNAME_PWM1END,   UPER_FID_PWM1END, lpc_pwm1_end);
 
+	/* Special sensors functions */
+	SFPServer_addFunctionHandler(server, UPER_FNAME_DHTXXREAD, UPER_FID_DHTXXREAD, lpc_dhtxxRead);
 
 	/* Other functions */
 	SFPServer_addFunctionHandler(server, UPER_FNAME_RESTART,       UPER_FID_RESTART, lpc_system_restart);
