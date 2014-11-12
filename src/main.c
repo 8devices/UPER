@@ -82,14 +82,14 @@ int main(void) {
 	// Init the rest of the system
 	Time_init();
 
-	while (CDC_Init(&stream, GUID) != LPC_OK); // Load SFPPacketStream
-
-	LPC_SYSCON->SYSAHBCLKCTRL |= BIT6 | BIT16 | BIT19; // Enable clock for GPIO, IOConfig and Pin Interrupts
-
 #ifndef DEBUG
 	// Disabled for debugging (JTAG)
 	lpc_config_gpioInit();
 #endif
+
+	while (CDC_Init(&stream, GUID) != LPC_OK); // Load SFPPacketStream
+
+	LPC_SYSCON->SYSAHBCLKCTRL |= BIT6 | BIT16 | BIT19; // Enable clock for GPIO, IOConfig and Pin Interrupts
 
 	// PIO0_4 and PIO0_5 forced to I2C
 	LPC_IOCON->PIO0_4 |= 1;	// I2C SCL
