@@ -91,7 +91,7 @@ volatile uint8_t CDC_UART_rxPending;
 volatile uint8_t CDC_UART_txBusy;
 
 /* SFP variables */
-#define CDC_SFP_RX_BUFFER_SIZE_N	7
+#define CDC_SFP_RX_BUFFER_SIZE_N	8
 #define CDC_SFP_RX_BUFFER_MASK		((1 << CDC_SFP_RX_BUFFER_SIZE_N) - 1)
 volatile uint8_t  CDC_SFP_rxBuffer[1 << CDC_SFP_RX_BUFFER_SIZE_N];
 volatile uint32_t CDC_SFP_rxBufferWritePos;
