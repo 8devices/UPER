@@ -85,60 +85,125 @@ void lpc_config_gpioInit() {
 }
 
 SFPResult lpc_config_setPrimary(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 1) return SFP_ERR_ARG_COUNT;
+	if (SFPFunction_getArgumentCount(msg) != 1)
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
+	SFPArgumentType pinType = SFPFunction_getArgumentType(msg, 0);
+	uint8_t *pins;
+	uint32_t pinCount, i;
 
-	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+	if (pinType == SFP_ARG_INT) {
+		uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+		pins = &pin;
+		pinCount = 1;
+	} else if (pinType == SFP_ARG_BYTE_ARRAY) {
+		pins = SFPFunction_getArgument_barray(msg, 0, &pinCount);
+	} else {
+		return SFP_ERR_ARG_TYPE;
+	}
 
-	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
+	for (i=0; i<pinCount; i++) {  // Check argument values before any changes
+		if (pins[i] >= LPC_PIN_COUNT)
+			return SFP_ERR_ARG_VALUE;
+	}
 
-	*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_PRIMARY_FUNCTION[pin];
+	for (i=0; i<pinCount; i++) {
+		uint8_t pin = pins[i];
+
+		*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_PRIMARY_FUNCTION[pin];
+	}
 
 	return SFP_OK;
 }
 
 SFPResult lpc_config_setSecondary(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 1) return SFP_ERR_ARG_COUNT;
+	if (SFPFunction_getArgumentCount(msg) != 1)
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT) return SFP_ERR_ARG_TYPE;
+	SFPArgumentType pinType = SFPFunction_getArgumentType(msg, 0);
+	uint8_t *pins;
+	uint32_t pinCount, i;
 
-	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+	if (pinType == SFP_ARG_INT) {
+		uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+		pins = &pin;
+		pinCount = 1;
+	} else if (pinType == SFP_ARG_BYTE_ARRAY) {
+		pins = SFPFunction_getArgument_barray(msg, 0, &pinCount);
+	} else {
+		return SFP_ERR_ARG_TYPE;
+	}
 
-	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
+	for (i=0; i<pinCount; i++) {  // Check argument values before any changes
+		if (pins[i] >= LPC_PIN_COUNT)
+			return SFP_ERR_ARG_VALUE;
+	}
 
-	*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_SECONDARY_FUNCTION[pin];
+	for (i=0; i<pinCount; i++) {
+		uint8_t pin = pins[i];
+
+		*LPC_PIN_REGISTERS[pin] = (*LPC_PIN_REGISTERS[pin] & ~LPC_PIN_FUNCTION_MASK) | LPC_PIN_SECONDARY_FUNCTION[pin];
+	}
 
 	return SFP_OK;
 }
 
 
 SFPResult lpc_pinMode(SFPFunction *msg) {
-	if (SFPFunction_getArgumentCount(msg) != 2) return SFP_ERR_ARG_COUNT;
+	if (SFPFunction_getArgumentCount(msg) != 2)
+		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+	SFPArgumentType pinType = SFPFunction_getArgumentType(msg, 0);
+	SFPArgumentType modeType = SFPFunction_getArgumentType(msg, 1);
+	uint8_t *pins, *modes;
+	uint32_t pinCount, modeCount, i;
+
+	if (pinType == SFP_ARG_INT && modeType == SFP_ARG_INT) {
+		uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+		uint8_t mode = SFPFunction_getArgument_int32(msg, 1);
+		pins = &pin;
+		modes = &mode;
+		pinCount = modeCount = 1;
+	} else if (pinType == SFP_ARG_BYTE_ARRAY && modeType == SFP_ARG_BYTE_ARRAY) {
+		pins = SFPFunction_getArgument_barray(msg, 0, &pinCount);
+		modes = SFPFunction_getArgument_barray(msg, 1, &modeCount);
+	} else {
 		return SFP_ERR_ARG_TYPE;
-
-	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
-	uint8_t mode = SFPFunction_getArgument_int32(msg, 1);
-
-	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
-	if (mode > 4 || mode == 3) return SFP_ERR_ARG_VALUE;
-
-	uint8_t port = 0;
-	uint8_t pinNum = LPC_PIN_IDS[pin];
-	if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
-		port = 1;
-		pinNum -= 24;
 	}
 
-	*LPC_PIN_REGISTERS[pin] &= ~LPC_PIN_MODE_MASK;	// Remove pull-up/down resistors
+	if (pinCount != modeCount)
+		return SFP_ERR_ARG_VALUE;
 
-	if (mode == 1) {
-		LPC_GPIO->DIR[port] |= (1 << pinNum);	// Set direction bit (output)
-	} else {
-		*LPC_PIN_REGISTERS[pin] |= (mode << 2) & LPC_PIN_MODE_MASK;		// Setup resistors
-		LPC_GPIO->DIR[port] &= ~(1 << pinNum);	// Clear direction bit (input)
+	for (i=0; i<pinCount; i++) {  // Check argument values before any changes
+			uint8_t pin = pins[i];
+			uint8_t mode = modes[i];
+
+			if (pin >= LPC_PIN_COUNT)
+				return SFP_ERR_ARG_VALUE;
+
+			if (mode > 4 || mode == 3)
+				return SFP_ERR_ARG_VALUE;
+	}
+
+	for (i=0; i<pinCount; i++) {
+		uint8_t pin = pins[i];
+		uint8_t mode = modes[i];
+
+		uint8_t port = 0;
+		uint8_t pinNum = LPC_PIN_IDS[pin];
+		if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
+			port = 1;
+			pinNum -= 24;
+		}
+
+		*LPC_PIN_REGISTERS[pin] &= ~LPC_PIN_MODE_MASK;	// Remove pull-up/down resistors
+
+		if (mode == 1) {
+			LPC_GPIO->DIR[port] |= (1 << pinNum);	// Set direction bit (output)
+		} else {
+			*LPC_PIN_REGISTERS[pin] |= (mode << 2) & LPC_PIN_MODE_MASK;		// Setup resistors
+			LPC_GPIO->DIR[port] &= ~(1 << pinNum);	// Clear direction bit (input)
+		}
 	}
 
 	return SFP_OK;
@@ -148,25 +213,48 @@ SFPResult lpc_digitalWrite(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 2)
 		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT || SFPFunction_getArgumentType(msg, 1) != SFP_ARG_INT)
+	SFPArgumentType pinType = SFPFunction_getArgumentType(msg, 0);
+	SFPArgumentType valueType = SFPFunction_getArgumentType(msg, 1);
+	uint8_t *pins, *values;
+	uint32_t pinCount, valueCount, i;
+
+	if (pinType == SFP_ARG_INT && valueType == SFP_ARG_INT) {
+		uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+		uint8_t value = SFPFunction_getArgument_int32(msg, 1);
+		pins = &pin;
+		values = &value;
+		pinCount = valueCount = 1;
+	} else if (pinType == SFP_ARG_BYTE_ARRAY && valueType == SFP_ARG_BYTE_ARRAY) {
+		pins = SFPFunction_getArgument_barray(msg, 0, &pinCount);
+		values = SFPFunction_getArgument_barray(msg, 1, &valueCount);
+	} else {
 		return SFP_ERR_ARG_TYPE;
-
-	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
-	uint8_t value = SFPFunction_getArgument_int32(msg, 1);
-
-	if (pin >= LPC_PIN_COUNT) return SFP_ERR_ARG_VALUE;
-
-	uint8_t port = 0;
-	uint8_t pinNum = LPC_PIN_IDS[pin];
-	if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
-		port = 1;
-		pinNum -= 24;
 	}
 
-	if (value == 0) {
-		LPC_GPIO->CLR[port] = (1 << pinNum);
-	} else {
-		LPC_GPIO->SET[port] = (1 << pinNum);
+	if (pinCount != valueCount)
+		return SFP_ERR_ARG_VALUE;
+
+	for (i=0; i<pinCount; i++) {  // Check argument values before any changes
+		if (pins[i] >= LPC_PIN_COUNT)
+			return SFP_ERR_ARG_VALUE;
+	}
+
+	for (i=0; i<pinCount; i++) {
+		uint8_t pin = pins[i];
+		uint8_t value = values[i];
+
+		uint8_t port = 0;
+		uint8_t pinNum = LPC_PIN_IDS[pin];
+		if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
+			port = 1;
+			pinNum -= 24;
+		}
+
+		if (value == 0) {
+			LPC_GPIO->CLR[port] = (1 << pinNum);
+		} else {
+			LPC_GPIO->SET[port] = (1 << pinNum);
+		}
 	}
 
 	return SFP_OK;
@@ -176,25 +264,45 @@ SFPResult lpc_digitalRead(SFPFunction *msg) {
 	if (SFPFunction_getArgumentCount(msg) != 1)
 		return SFP_ERR_ARG_COUNT;
 
-	if (SFPFunction_getArgumentType(msg, 0) != SFP_ARG_INT)
+	SFPArgumentType pinType = SFPFunction_getArgumentType(msg, 0);
+	uint8_t *pins, *values;
+	uint32_t pinCount, i;
+
+	if (pinType == SFP_ARG_INT) {
+		uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
+		pins = &pin;
+		pinCount = 1;
+	} else if (pinType == SFP_ARG_BYTE_ARRAY) {
+		pins = SFPFunction_getArgument_barray(msg, 0, &pinCount);
+	} else {
 		return SFP_ERR_ARG_TYPE;
-
-	uint8_t pin = SFPFunction_getArgument_int32(msg, 0);
-
-	if (pin >= LPC_PIN_COUNT)
-		return SFP_ERR_ARG_VALUE;
-
-	uint8_t port = 0;
-	uint8_t pinNum = LPC_PIN_IDS[pin];
-	if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
-		port = 1;
-		pinNum -= 24;
 	}
 
-	uint8_t val = 0;
+	for (i=0; i<pinCount; i++) {  // Check argument values before any changes
+		if (pins[i] >= LPC_PIN_COUNT)
+			return SFP_ERR_ARG_VALUE;
+	}
 
-	if (LPC_GPIO->PIN[port] & (1 << pinNum))
-		val = 1;
+	values = MemoryManager_malloc(pinCount);
+	if (values == NULL)
+		return SFP_ERR_ALLOC_FAILED;
+
+	for (i=0; i<pinCount; i++) {
+		uint8_t pin = pins[i];
+
+		uint8_t port = 0;
+		uint8_t pinNum = LPC_PIN_IDS[pin];
+		if (pinNum > 23) {	// if not PIO0_0 to PIO0_23
+			port = 1;
+			pinNum -= 24;
+		}
+
+		if (LPC_GPIO->PIN[port] & (1 << pinNum))
+			values[i] = 1;
+		else
+			values[i] = 0;
+	}
+
 
 	SFPFunction *outFunc = SFPFunction_new();
 
@@ -203,8 +311,13 @@ SFPResult lpc_digitalRead(SFPFunction *msg) {
 	SFPFunction_setType(outFunc, SFPFunction_getType(msg));
 	SFPFunction_setID(outFunc, UPER_FID_DIGITALREAD);
 	SFPFunction_setName(outFunc, UPER_FNAME_DIGITALREAD);
-	SFPFunction_addArgument_int32(outFunc, pin);
-	SFPFunction_addArgument_int32(outFunc, val);
+	if (pinType == SFP_ARG_INT) {
+		SFPFunction_addArgument_int32(outFunc, pins[0]);
+		SFPFunction_addArgument_int32(outFunc, values[0]);
+	} else {
+		SFPFunction_addArgument_barray(outFunc, pins, pinCount);
+		SFPFunction_addArgument_barray(outFunc, values, pinCount);
+	}
 	SFPFunction_send(outFunc, &stream);
 	SFPFunction_delete(outFunc);
 
