@@ -73,6 +73,8 @@ SFPResult lpc_pwm0_set(SFPFunction *msg) {
 
 	if (p_channelID > 2) return SFP_ERR_ARG_VALUE;
 
+	while (LPC_CT16B0->TC != 0);
+
 	if (LPC_CT16B0->MR3 < p_highTime)
 		LPC_CT16B0->MR[p_channelID] = 0;	// Set full high time (0 low time)
 	else
@@ -136,6 +138,8 @@ SFPResult lpc_pwm1_set(SFPFunction *msg) {
 	uint32_t p_highTime = SFPFunction_getArgument_int32(msg, 1); 	// PWM signal high time in microseconds
 
 	if (p_channelID > 2) return SFP_ERR_ARG_VALUE;
+
+	while (LPC_CT32B0->TC != 0);
 
 	if (LPC_CT32B0->MR3 < p_highTime)
 		LPC_CT32B0->MR[p_channelID] = 0;	// Set full high time (0 low time)
