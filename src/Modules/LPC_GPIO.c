@@ -321,6 +321,8 @@ SFPResult lpc_digitalRead(SFPFunction *msg) {
 	SFPFunction_send(outFunc, &stream);
 	SFPFunction_delete(outFunc);
 
+	MemoryManager_free(values);
+
 	return SFP_OK;
 }
 
