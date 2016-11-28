@@ -37,7 +37,7 @@ uint8_t const LPC_PIN_IDS[] = {
 		0+7,	24+28,	24+31,	24+21,	0+8,	0+9,	0+10,	24+29,	// 16
 		24+19,	24+25,	24+16,	0+19,	0+18,	0+17,	24+15,	0+23,	// 24
 		0+22,	0+16,	0+15,	24+22,	24+14,	24+13,	0+14,	0+13,	// 32
-		0+12,	0+11,	// 34
+		0+12,	0+11,	0+4,	0+5,	0+1, // 37
 };
 
 volatile uint32_t * const LPC_PIN_REGISTERS[] = {
@@ -49,7 +49,8 @@ volatile uint32_t * const LPC_PIN_REGISTERS[] = {
 		&LPC_IOCON->PIO0_18,	&LPC_IOCON->PIO0_17,	&LPC_IOCON->PIO1_15, 	&LPC_IOCON->PIO0_23, 		// 24
 		&LPC_IOCON->PIO0_22,	&LPC_IOCON->PIO0_16,	&LPC_IOCON->SWDIO_PIO0_15,&LPC_IOCON->PIO1_22,
 		&LPC_IOCON->PIO1_14, 	&LPC_IOCON->PIO1_13, 	&LPC_IOCON->TRST_PIO0_14,&LPC_IOCON->TDO_PIO0_13,	// 32
-		&LPC_IOCON->TMS_PIO0_12,&LPC_IOCON->TDI_PIO0_11,	// 34
+		&LPC_IOCON->TMS_PIO0_12,&LPC_IOCON->TDI_PIO0_11,&LPC_IOCON->PIO0_4, 	&LPC_IOCON->PIO0_5,
+		&LPC_IOCON->PIO0_1, //37
 };
 
 #define LPC_PIN_FUNCTION_MASK	(BIT7 | 7)		// FUNC bits + AD bit
@@ -60,7 +61,7 @@ uint8_t const LPC_PIN_PRIMARY_FUNCTION[] = {	// GPIO function, All AD bits = 1
 		0x80,	0x80,	0x80,	0x80,		0x80,	0x80,	0x81,	0x80,	// 16
 		0x80,	0x80,	0x80,	0x80,		0x80,	0x80,	0x80,	0x80,	// 24
 		0x80,	0x80,	0x81,	0x80,		0x80,	0x80,	0x81,	0x81,	// 32
-		0x81,	0x81,	// 34
+		0x81,	0x81,	0x80,	0x80,		0x80, // 37
 };
 
 uint8_t const LPC_PIN_SECONDARY_FUNCTION[] = {
@@ -72,7 +73,8 @@ uint8_t const LPC_PIN_SECONDARY_FUNCTION[] = {
 		0x81 /* UART RX */,	0x80 /* GPIO */,		0x82 /* PWM16_2 */,		0x01 /* ADC7 */,	// 24
 		0x01 /* ADC6 */,	0x01 /* ADC5 */,		0x02 /* ADC4 */,		0x80 /* GPIO */,
 		0x82 /* PWM16_1 */,	0x82 /* PWM16_0 */,		0x02 /* ADC3 */,		0x02 /* ADC2 */,	// 32
-		0x02 /* ADC1 */,	0x02 /* ADC0 */,	// 34
+		0x02 /* ADC1 */,	0x02 /* ADC0 */,		0x81 /* SCL */,			0x81 /* SDA */,
+		0x80 /* GPIO */, // 37
 };
 
 static volatile SFPFunctionType LPC_INTERRUPT_FUNCTION_TYPE[LPC_INTERRUPT_COUNT];

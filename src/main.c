@@ -89,10 +89,6 @@ int main(void) {
 	lpc_config_gpioInit();
 #endif
 
-	// PIO0_4 and PIO0_5 forced to I2C
-	LPC_IOCON->PIO0_4 |= 1;	// I2C SCL
-	LPC_IOCON->PIO0_5 |= 1;	// I2C SDA
-
 	while (CDC_Init(&stream, GUID) != LPC_OK); // Load SFPPacketStream
 
 	/* SFP initialization, configuration and launch */

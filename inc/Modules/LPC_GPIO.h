@@ -35,7 +35,7 @@
 
 #include "main.h"
 
-#define LPC_PIN_COUNT	34
+#define LPC_PIN_COUNT	37
 #define LPC_INTERRUPT_COUNT 8
 
 inline void GPIO_EnableInterrupt(uint8_t intID);
