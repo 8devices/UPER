@@ -39,6 +39,7 @@
 #include "Modules/LPC_SPI.h"
 #include "Modules/LPC_I2C.h"
 #include "Modules/LPC_PWM.h"
+#include "Modules/LPC_1WIRE.h"
 
 #include "IAP.h"
 
@@ -137,6 +138,9 @@ int main(void) {
 
 
 	/* Other functions */
+	SFPServer_addFunctionHandler(server, "wire_begin", 100, lpc_1wire_begin);
+	SFPServer_addFunctionHandler(server, "wire_write", 101, lpc_1wire_trans);
+
 	SFPServer_addFunctionHandler(server, UPER_FNAME_RESTART,       UPER_FID_RESTART, lpc_system_restart);
 	SFPServer_addFunctionHandler(server, UPER_FNAME_GETDEVICEINFO,  UPER_FID_GETDEVICEINFO, lpc_system_getDeviceInfo);
 
