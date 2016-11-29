@@ -53,7 +53,7 @@
 
 SFPStream stream;
 
-uint32_t GUID[4];
+uint8_t UUID[16];
 uint32_t UPER_PART_NUMBER;
 uint32_t UPER_BOOT_CODE_VERSION;
 

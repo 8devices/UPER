@@ -366,49 +366,65 @@ void UART_IRQHandler() {
 	}
 }
 
-char inline CDC_intToBase64(uint8_t i) {
-	i &= 63;
-
-	if (i < 10) {
-		return '0' + i;
-	} else if (i < (10+26)) {
-		return ('A'-10) + i;
-	} else if (i < (10+26+26)) {
-		return ('a'-10-26) + i;
-	} else if (i == 62) {
-		return '@';
-	} else {
-		return '$';
-	}
+char CDC_NibbleToHex(uint8_t i) {
+	i &= 0xf;
+	return (i < 10) ? ('0'+i) : ('a'-10+i);
 }
 
-void inline CDC_GenerateSerialDescriptor(uint32_t guid[4]) {
+void CDC_GenerateSerialDescriptor(uint8_t uuid[16]) {
+	char *ptr = (char *)&UPER_USBSerialStringDescriptor[2];
 
-	uint8_t *ptr = &UPER_USBSerialStringDescriptor[2];
+	// 8
+	ptr[0] = CDC_NibbleToHex(uuid[0] >> 4);
+	ptr[2] = CDC_NibbleToHex(uuid[0]);
+	ptr[4] = CDC_NibbleToHex(uuid[1] >> 4);
+	ptr[6] = CDC_NibbleToHex(uuid[1]);
+	ptr[8] = CDC_NibbleToHex(uuid[2] >> 4);
+	ptr[10] = CDC_NibbleToHex(uuid[2]);
+	ptr[12] = CDC_NibbleToHex(uuid[3] >> 4);
+	ptr[14] = CDC_NibbleToHex(uuid[3]);
 
-	uint8_t i;
-	for (i=0; i<4; i++) {
-		uint32_t id = guid[i];
+	// 4
+	ptr[18] = CDC_NibbleToHex(uuid[4] >> 4);
+	ptr[20] = CDC_NibbleToHex(uuid[4]);
+	ptr[22] = CDC_NibbleToHex(uuid[5] >> 4);
+	ptr[24] = CDC_NibbleToHex(uuid[5]);
 
-		*(ptr+0) = CDC_intToBase64(id >> 30);
-		*(ptr+2) = CDC_intToBase64(id >> 24);
-		*(ptr+4) = CDC_intToBase64(id >> 18);
-		*(ptr+6) = CDC_intToBase64(id >> 12);
-		*(ptr+8) = CDC_intToBase64(id >> 6);
-		*(ptr+10) = CDC_intToBase64(id);
+	// 4
+	ptr[28] = CDC_NibbleToHex(uuid[6] >> 4);
+	ptr[30] = CDC_NibbleToHex(uuid[6]);
+	ptr[32] = CDC_NibbleToHex(uuid[7] >> 4);
+	ptr[34] = CDC_NibbleToHex(uuid[7]);
 
-		ptr += 14;
-	}
+	// 4
+	ptr[38] = CDC_NibbleToHex(uuid[8] >> 4);
+	ptr[40] = CDC_NibbleToHex(uuid[8]);
+	ptr[42] = CDC_NibbleToHex(uuid[9] >> 4);
+	ptr[44] = CDC_NibbleToHex(uuid[9]);
+
+	// 12
+	ptr[48] = CDC_NibbleToHex(uuid[10] >> 4);
+	ptr[50] = CDC_NibbleToHex(uuid[10]);
+	ptr[52] = CDC_NibbleToHex(uuid[11] >> 4);
+	ptr[54] = CDC_NibbleToHex(uuid[11]);
+	ptr[56] = CDC_NibbleToHex(uuid[12] >> 4);
+	ptr[58] = CDC_NibbleToHex(uuid[12]);
+	ptr[60] = CDC_NibbleToHex(uuid[13] >> 4);
+	ptr[62] = CDC_NibbleToHex(uuid[13]);
+	ptr[64] = CDC_NibbleToHex(uuid[14] >> 4);
+	ptr[66] = CDC_NibbleToHex(uuid[14]);
+	ptr[68] = CDC_NibbleToHex(uuid[15] >> 4);
+	ptr[70] = CDC_NibbleToHex(uuid[15]);
 }
 
-ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]) {
+ErrorCode_t CDC_Init(SFPStream *stream, uint8_t uid[16]) {
 	USBD_API_INIT_PARAM_T usb_param;
 	USB_CORE_DESCS_T desc;
 	USBD_HANDLE_T hUsb;
 	ErrorCode_t ret = LPC_OK;
 	uint32_t ep_indx;
 
-	CDC_GenerateSerialDescriptor(guid);
+	CDC_GenerateSerialDescriptor(uid);
 
 	/* get USB API table pointer */
 	pUsbApi = (USBD_API_T*) ((*(ROM **) (0x1FFF1FF8))->pUSBD);

@@ -46,7 +46,7 @@ extern uint8_t UPER_ConfigDescriptor[];
 
 extern uint8_t UPER_USBSerialStringDescriptor[];
 
-ErrorCode_t CDC_Init(SFPStream *stream, uint32_t guid[4]);
+ErrorCode_t CDC_Init(SFPStream *stream, uint8_t uuid[16]);
 
 #endif /* CDC_H_ */
 

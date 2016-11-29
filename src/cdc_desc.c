@@ -336,7 +336,7 @@ ALIGN4 const uint8_t UPER_StringDescriptor[] = {
 };
 
 ALIGN4 uint8_t UPER_USBSerialStringDescriptor[] = {
-  (2 + 2*27),                        /* bLength */
+  (2 + 2*36),                        /* bLength */
   USB_STRING_DESCRIPTOR_TYPE,        /* bDescriptorType */
   '#', 0,
   '#', 0,
@@ -344,11 +344,6 @@ ALIGN4 uint8_t UPER_USBSerialStringDescriptor[] = {
   '#', 0,
   '#', 0,
   '#', 0,
-  '-', 0,
-  '#', 0,
-  '#', 0,
-  '#', 0,
-  '#', 0,
   '#', 0,
   '#', 0,
   '-', 0,
@@ -356,9 +351,23 @@ ALIGN4 uint8_t UPER_USBSerialStringDescriptor[] = {
   '#', 0,
   '#', 0,
   '#', 0,
+  '-', 0,
+  '#', 0,
+  '#', 0,
   '#', 0,
   '#', 0,
   '-', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '-', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
+  '#', 0,
   '#', 0,
   '#', 0,
   '#', 0,

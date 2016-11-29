@@ -35,6 +35,13 @@
 
 #define IAP_ADDRESS 0x1FFF1FF1
 
+#define MEMCPY_HTOBE32(ptr, i) { \
+		(ptr)[0] = ((i) >> 24) & 0xff; \
+		(ptr)[1] = ((i) >> 16) & 0xff; \
+		(ptr)[2] = ((i) >> 8) & 0xff; \
+		(ptr)[3] = ((i) >> 0) & 0xff; \
+	}
+
 
 void inline iap_entry(uint32_t param_tab[], uint32_t result_tab[]) {
 	void (*iap)(uint32_t[], uint32_t[]);
@@ -42,7 +49,7 @@ void inline iap_entry(uint32_t param_tab[], uint32_t result_tab[]) {
 	iap(param_tab, result_tab);
 }
 
-void IAP_GetSerialNumber(uint32_t guid[4]) {
+void IAP_GetSerialNumber(uint8_t uid[16]) {
 	uint32_t command = 58;
 	uint32_t result[5];
 
@@ -50,10 +57,10 @@ void IAP_GetSerialNumber(uint32_t guid[4]) {
 		iap_entry(&command, result);
 	} while (result[0] != 0);
 
-	guid[0] = result[1];
-	guid[1] = result[2];
-	guid[2] = result[3];
-	guid[3] = result[4];
+	MEMCPY_HTOBE32(&uid[0], result[4]);
+	MEMCPY_HTOBE32(&uid[4], result[3]);
+	MEMCPY_HTOBE32(&uid[8], result[2]);
+	MEMCPY_HTOBE32(&uid[12], result[1]);
 }
 
 uint32_t IAP_GetPartNumber(void) {

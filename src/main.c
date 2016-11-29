@@ -54,7 +54,7 @@ SFPResult lpc_system_getDeviceInfo(SFPFunction *msg) {
 	SFPFunction_setID(func, UPER_FID_GETDEVICEINFO);
 	SFPFunction_setName(func, UPER_FNAME_GETDEVICEINFO);
 	SFPFunction_addArgument_int32(func, UPER_FIRMWARE_VERSION);
-	SFPFunction_addArgument_barray(func, (uint8_t*)&GUID[0], 16);
+	SFPFunction_addArgument_barray(func, UUID, 16);
 	SFPFunction_addArgument_int32(func, UPER_PART_NUMBER);
 	SFPFunction_addArgument_int32(func, UPER_BOOT_CODE_VERSION);
 	SFPFunction_send(func, &stream);
@@ -78,7 +78,7 @@ int main(void) {
 	// Read IAP before any interrupts are enabled
 	UPER_PART_NUMBER		= IAP_GetPartNumber();
 	UPER_BOOT_CODE_VERSION	= IAP_GetBootCodeVersion();
-	IAP_GetSerialNumber(GUID);
+	IAP_GetSerialNumber(UUID);
 
 	// Init the rest of the system
 	Time_init();
@@ -90,7 +90,7 @@ int main(void) {
 	lpc_config_gpioInit();
 #endif
 
-	while (CDC_Init(&stream, GUID) != LPC_OK); // Load SFPPacketStream
+	while (CDC_Init(&stream, UUID) != LPC_OK); // Load SFPPacketStream
 
 	/* SFP initialization, configuration and launch */
 	SFPServer *server = SFPServer_new(&stream);
